@@ -59,10 +59,23 @@ process = nanoAOD_customizePentaquarkJpsiP(process, isMC) # J/psi + p only
 process = nanoAOD_customizePentaquarkJpsiPK(process, isMC) # J/psi + p + K only (Lambda_b decays)
 ```
 
-Run example:
+Run examples:
+
+**Using the dedicated pentaquark test files (recommended):**
 ```shell
 cd PhysicsTools/BPHNano/test/
-cmsRun run_bphNano_cfg.py inputFiles="file:MiniAODv4_454.root" outputFiles="pentaquark.root" maxEvents=1000 isMC=True
+# For data:
+cmsRun run_pentaquark_data_cfg.py maxEvents=1000
+
+# For MC:
+cmsRun run_pentaquark_mc_cfg.py maxEvents=1000
+```
+
+**Using the general configuration file:**
+```shell
+cd PhysicsTools/BPHNano/test/
+cmsRun run_bphNano_cfg.py decay="pentaquark" isMC=False maxEvents=1000  # data
+cmsRun run_bphNano_cfg.py decay="pentaquark" isMC=True maxEvents=1000   # MC
 ```
 
 ### Other Available Analyses
