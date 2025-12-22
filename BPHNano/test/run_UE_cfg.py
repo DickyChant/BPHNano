@@ -158,11 +158,8 @@ process.GlobalTag = GlobalTag(process.GlobalTag, globaltag, '')
 
 from PhysicsTools.BPHNano.nanoUE_cff import *
 
-# Add gen particles for MC
-if options.isMC:
-   process = nanoAOD_customizeUE_MC(process)
-
 # Add UE specific customization (non-BPH nano for underlying event studies)
+# For MC, this also adds gen particles automatically
 process = nanoAOD_customizeUE(process, options.isMC)
 
 print("Processing modules:", process.nanoSequenceUE)
