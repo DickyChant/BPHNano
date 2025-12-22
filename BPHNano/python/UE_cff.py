@@ -44,7 +44,7 @@ trackUETable = cms.EDProducer(
         nValidHits      = Var("userInt('nValidHits')", int, doc="Number of valid hits"),
         ptErr      = Var("userFloat('ptErr')", float, doc="Pt uncertainty"),
         normChi2   = Var("userFloat('normChi2')", float, doc="Track fit chi-squared divided by n.d.o.f."),
-        nValidPixelHits = Var("userInt('nValidPixelHits')", float, doc="Number of pixel hits"),
+        nValidPixelHits = Var("userInt('nValidPixelHits')", int, doc="Number of pixel hits"),
         ),
 )
 

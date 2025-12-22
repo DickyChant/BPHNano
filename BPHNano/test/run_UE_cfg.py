@@ -63,7 +63,11 @@ print("////////////////// UE nano running with options: ////////////////////////
 print(options)
 print("/////////////////////////////////////////////////////////////////////////")
 
-globaltag = '124X_mcRun3_2022_realistic_v11' if options.isMC else '130X_dataRun3_Prompt_v3'
+# Use provided globalTag if specified, otherwise use defaults
+if options.globalTag == '130X_dataRun3_Prompt_v3':  # Default value
+    globaltag = '124X_mcRun3_2022_realistic_v11' if options.isMC else '130X_dataRun3_Prompt_v3'
+else:
+    globaltag = options.globalTag
 
 if options.isMC:
    options.tag+="_mc"
