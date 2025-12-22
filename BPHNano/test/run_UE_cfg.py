@@ -94,7 +94,7 @@ process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('Configuration.StandardSequences.GeometryRecoDB_cff')
 process.load("Configuration.StandardSequences.MagneticField_cff")
-process.load('PhysicsTools.BPHNano.nanoBPH_cff')
+process.load('PhysicsTools.BPHNano.nanoUE_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
@@ -156,18 +156,18 @@ process.NANOAODoutput = cms.OutputModule("NanoAODOutputModule",
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, globaltag, '')
 
-from PhysicsTools.BPHNano.nanoBPH_cff import *
+from PhysicsTools.BPHNano.nanoUE_cff import *
 
 # Add gen particles for MC
 if options.isMC:
-   process = nanoAOD_customizeMC(process)
+   process = nanoAOD_customizeUE_MC(process)
 
 # Add UE specific customization (non-BPH nano for underlying event studies)
 process = nanoAOD_customizeUE(process, options.isMC)
 
-print("Processing modules:", process.nanoSequence)
+print("Processing modules:", process.nanoSequenceUE)
 
-process.nanoAOD_UE_step = cms.Path(process.nanoSequence)
+process.nanoAOD_UE_step = cms.Path(process.nanoSequenceUE)
 
 process.endjob_step = cms.EndPath(process.endOfProcess)
 process.FEVTDEBUGHLToutput_step = cms.EndPath(process.FEVTDEBUGHLToutput)

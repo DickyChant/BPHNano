@@ -2,13 +2,17 @@
 
 Non-BPH configuration for underlying event measurement at 13 TeV, following the FSQ-15-007 analysis.
 
+**This configuration is completely independent of BPH modules** - it uses only standard NanoAOD components.
+
 ## Overview
 
 This configuration creates a NanoAOD focused on underlying event studies rather than B physics. It includes:
 - Charged particle tracks (pt > 0.5 GeV, |eta| < 2.5)
 - Primary vertices
-- Generator-level particles (for MC)
+- Generator-level particles (for MC, using standard `finalGenParticles`)
 - Basic event metadata
+
+**No BPH dependencies:** Uses `nanoUE_cff.py` instead of `nanoBPH_cff.py` for a truly standalone UE configuration.
 
 ## Running the configuration
 
@@ -49,6 +53,9 @@ The NanoAOD output contains:
 - Generator matching (for MC only)
 
 ### Differences from BPH Nano
+- **Completely standalone:** No BPH module dependencies
+- **Standard NanoAOD components:** Uses `finalGenParticles` instead of `finalGenParticlesBPH`
+- **Standard MC matching:** Uses `CandMCMatchTableProducer` instead of `CandMCMatchTableProducerBPH`
 - No B meson reconstruction
 - No dimuon reconstruction
 - No muon-specific selections

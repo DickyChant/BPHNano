@@ -34,9 +34,6 @@ from PhysicsTools.BPHNano.LambdabToLambdahhBuilder import *
 from PhysicsTools.BPHNano.BDKstar_cff import *
 #from PhysicsTools.BPHNano.LambdabToLambdahhBuilder_v2 import *
 
-## UE collections for underlying event studies (FSQ-15-007)
-from PhysicsTools.BPHNano.UE_cff import *
-
 vertexTable.svSrc = cms.InputTag("slimmedSecondaryVertices")
 
 
@@ -175,16 +172,5 @@ def nanoAOD_customizeBToXLL(process,isMC):
        process.nanoSequence = cms.Sequence( process.nanoSequence + BToKMuMuSequence + BToKMuMuTables + KshortToPiPiSequence + KshortToPiPiTables + BToKshortMuMuSequence +BToKshortMuMuTables + KstarPiKSequence +  KstarPiKTables +KstarPiKTables+ BToKstarMuMuSequence + BToKstarMuMuTables )
     return process
 
-
-def nanoAOD_customizeUE(process, isMC):
-    """
-    Customization for Underlying Event studies (FSQ-15-007)
-    Non-BPH configuration for underlying event measurement at 13 TeV
-    """
-    if isMC:
-       process.nanoSequence = cms.Sequence( process.nanoSequence + tracksUESequenceMC + tracksUETablesMC )
-    else:
-       process.nanoSequence = cms.Sequence( process.nanoSequence + tracksUESequence + tracksUETables )
-    return process
 
 

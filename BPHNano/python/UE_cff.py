@@ -1,8 +1,10 @@
 import FWCore.ParameterSet.Config as cms
 from PhysicsTools.NanoAOD.common_cff import *
+from PhysicsTools.NanoAOD.genparticles_cff import *
 
 # Configuration for Underlying Event studies
 # Following FSQ-15-007 analysis for underlying event measurement at 13 TeV
+# This is a standalone configuration without BPH dependencies
 
 # Track selection for UE studies
 # We want all charged particles for UE measurements
@@ -50,7 +52,7 @@ trackUETable = cms.EDProducer(
 
 tracksUEMCMatch = cms.EDProducer("MCMatcher",
     src         = trackUETable.src,
-    matched     = cms.InputTag("finalGenParticlesBPH"),
+    matched     = cms.InputTag("finalGenParticles"),
     mcPdgId     = cms.vint32(321, 211, 2212, 13, 11),  # kaon, pion, proton, muon, electron
     checkCharge = cms.bool(False),
     mcStatus    = cms.vint32(1),
@@ -60,18 +62,25 @@ tracksUEMCMatch = cms.EDProducer("MCMatcher",
     resolveByMatchQuality = cms.bool(True),
 )
 
-tracksUEMCTable = cms.EDProducer("CandMCMatchTableProducerBPH",
+tracksUEMCTable = cms.EDProducer("CandMCMatchTableProducer",
     recoObjects   = tracksUEMCMatch.src,
-    genParts      = cms.InputTag("finalGenParticlesBPH"),
+    genParts      = cms.InputTag("finalGenParticles"),
     mcMap         = cms.InputTag("tracksUEMCMatch"),
     objName       = trackUETable.name,
     objType       = trackUETable.name,
-    objBranchName = cms.string("genPart"),
-    genBranchName = cms.string("track"),
+    branchName    = cms.string("genPart"),
     docString     = cms.string("MC matching for UE tracks"),
 )
 
 tracksUESequence   = cms.Sequence(tracksUE)
-tracksUESequenceMC = cms.Sequence(tracksUE + tracksUEMCMatch)
+tracksUESequenceMC = cms.Sequence(finalGenParticles + tracksUE + tracksUEMCMatch)
 tracksUETables     = cms.Sequence(trackUETable)
 tracksUETablesMC   = cms.Sequence(trackUETable + tracksUEMCTable)
+
+# Gen particle table for UE studies (use standard genParticleTable)
+genParticleUETable = genParticleTable.clone(
+    src = cms.InputTag("finalGenParticles")
+)
+
+genParticleUESequence = cms.Sequence(finalGenParticles)
+genParticleUETables = cms.Sequence(genParticleUETable)
