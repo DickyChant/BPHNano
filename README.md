@@ -3,6 +3,8 @@
 The focus is on B -> mumu X analyses.
 Based on the code of RK 2018 (BParkingNano)
 
+**New:** Non-BPH configuration for Underlying Event studies (FSQ-15-007) is now available. See [BPHNano/README_UE.md](BPHNano/README_UE.md) for details.
+
 ## Getting started
 
 ```shell
@@ -25,9 +27,19 @@ or https equivalent
 
 ## To run on a test file
 
+### BPH Nano (B physics)
+
 ```shell
 cd PhysicsTools/BPHNano/test/
 cmsenv 
 cmsRun run_bphNano_cfg.py
+```
+
+### UE Nano (Underlying Event studies, FSQ-15-007)
+
+```shell
+cd PhysicsTools/BPHNano/test/
+cmsenv 
+cmsRun run_UE_cfg.py
 ```
 
