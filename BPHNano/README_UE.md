@@ -90,7 +90,7 @@ common:
     globaltag: '130X_dataRun3_Prompt_v3'
   mc:
     splitting: 2
-    globaltag: '124X_mcRun3_2022_realistic_v11'
+    globaltag: '124X_mcRun3_2022_realistic_v12'
 
 samples:
   QCD_Flat_MC_2022:
@@ -117,8 +117,12 @@ python submit_on_crab.py \
 3. **Check job status**:
 
 ```bash
-crab status -d UE_NANO_2024_<sample_name>
+crab status -d UE_NANO_2024_QCD_Flat_MC_2022
+# Or for the data sample:
+crab status -d UE_NANO_2024_JetMET_Data_2022D
 ```
+
+**Note:** The multicrab script is currently configured for BPH nano production. You may need to modify the default pset configuration in the script or ensure `run_UE_cfg.py` is compatible with the expected parameters.
 
 ### Direct CRAB configuration
 
@@ -145,7 +149,7 @@ config.Data.inputDBS = 'global'
 config.Data.splitting = 'FileBased'
 config.Data.unitsPerJob = 2
 config.Data.publication = False
-config.Data.outLFNDirBase = '/store/user/<your_username>/UE_Nano'
+config.Data.outLFNDirBase = '/store/user/<your_username>/'
 
 config.Site.storageSite = 'T2_CH_CERN'
 ```
