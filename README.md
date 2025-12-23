@@ -3,7 +3,7 @@
 The focus is on B -> mumu X analyses.
 Based on the code of RK 2018 (BParkingNano)
 
-**New:** Non-BPH configuration for Underlying Event studies (FSQ-15-007) is now available. See [BPHNano/README_UE.md](BPHNano/README_UE.md) for details.
+**New:** Non-BPH configuration for Underlying Event studies (FSQ-15-007-like) at 13.6 TeV is now available. See [BPHNano/README_UE.md](BPHNano/README_UE.md) for details.
 
 ## Getting started
 
@@ -35,7 +35,7 @@ cmsenv
 cmsRun run_bphNano_cfg.py
 ```
 
-### UE Nano (Underlying Event studies, FSQ-15-007)
+### UE Nano (Underlying Event studies, FSQ-15-007-like, 13.6 TeV)
 
 ```shell
 cd PhysicsTools/BPHNano/test/

@@ -3,7 +3,7 @@ from PhysicsTools.NanoAOD.common_cff import *
 from PhysicsTools.NanoAOD.genparticles_cff import *
 
 # Configuration for Underlying Event studies
-# Following FSQ-15-007 analysis for underlying event measurement at 13 TeV
+# Following FSQ-15-007-like analysis for underlying event measurement at 13.6 TeV
 # This is a standalone configuration without BPH dependencies
 
 # Track selection for UE studies

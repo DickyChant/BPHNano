@@ -1,6 +1,6 @@
 ####################################### UE Nano #####################################
-#### Creates custom nanoAOD for Underlying Event studies (FSQ-15-007)
-#### Non-BPH configuration for underlying event measurement at 13 TeV
+#### Creates custom nanoAOD for Underlying Event studies (FSQ-15-007-like)
+#### Non-BPH configuration for underlying event measurement at 13.6 TeV
 ## Author: Based on BPHnano structure
 
 from FWCore.ParameterSet.VarParsing import VarParsing

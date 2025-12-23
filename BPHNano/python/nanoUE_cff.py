@@ -20,8 +20,8 @@ nanoSequenceUE = cms.Sequence(nanoMetadata +
 
 def nanoAOD_customizeUE(process, isMC):
     """
-    Customization for Underlying Event studies (FSQ-15-007)
-    Non-BPH configuration for underlying event measurement at 13 TeV
+    Customization for Underlying Event studies (FSQ-15-007-like)
+    Non-BPH configuration for underlying event measurement at 13.6 TeV
     Completely standalone without BPH dependencies
     """
     if isMC:

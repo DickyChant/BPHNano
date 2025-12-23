@@ -1,6 +1,6 @@
-# Underlying Event NanoAOD (FSQ-15-007)
+# Underlying Event NanoAOD (FSQ-15-007-like)
 
-Non-BPH configuration for underlying event measurement at 13 TeV, following the FSQ-15-007 analysis.
+Non-BPH configuration for underlying event measurement at 13.6 TeV, following the FSQ-15-007-like analysis.
 
 **This configuration is completely independent of BPH modules** - it uses only standard NanoAOD components.
 
@@ -62,9 +62,9 @@ The NanoAOD output contains:
 - Focuses on inclusive charged particle tracking
 - Optimized for minimum bias and QCD samples
 
-## Use Case: FSQ-15-007 Analysis
+## Use Case: FSQ-15-007-like Analysis
 
-This configuration is designed for underlying event measurements following the FSQ-15-007 analysis strategy:
+This configuration is designed for underlying event measurements at 13.6 TeV following the FSQ-15-007-like analysis strategy:
 1. Study charged particle multiplicity and pT distributions
 2. Measure underlying event activity in minimum bias events
 3. Study correlations between tracks and primary vertices
