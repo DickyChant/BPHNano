@@ -1,4 +1,24 @@
 # BDh
+
+## Setup (CMSSW)
+
+From inside your CMSSW area (e.g. `CMSSW_13_3_0/src`):
+
+```bash
+cmsenv
+scram b -j 8
+```
+
+## Setup (CRAB)
+
+If you use `BPHNano/production/submit_on_crab.py`, make sure CRAB and a valid proxy are available:
+
+```bash
+source /cvmfs/cms.cern.ch/common/crab-setup.sh
+voms-proxy-init -voms cms
+voms-proxy-info -all
+```
+
 ## command to generate configuration file with cmsDriver.py
 
 ## cmsDriver Options

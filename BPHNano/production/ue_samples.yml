@@ -1,0 +1,35 @@
+common:
+  data:
+    site: 'T2_CN_Beijing'
+    lumimask: 'https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions22/Cert_Collisions2022_355100_362760_Golden.json'
+    splitting: 2
+    globaltag: '130X_dataRun3_v2'
+  mc:
+    site: 'T2_CN_Beijing'
+    splitting: 2
+    globaltag: '130X_mcRun3_2022_realistic_v5'
+
+samples:
+  # QCD_MinBias:
+  #   dataset: '/QCD_PT-15to7000_TuneCP5_Flat_13p6TeV_pythia8/Run3Summer22MiniAODv4-124X_mcRun3_2022_realistic_v12-v2/MINIAODSIM'
+  #   isMC: True
+  
+  MinimumBias_Data_2022G:
+    dataset: '/MinimumBias/Run2022G-22Sep2023-v1/MINIAOD'
+    isMC: False
+  
+  MinimumBias_Data_2022F:
+    dataset: '/MinimumBias/Run2022F-22Sep2023-v1/MINIAOD'
+    isMC: False
+  
+  MinimumBias_Data_2022E:
+    dataset: '/MinimumBias/Run2022E-22Sep2023-v1/MINIAOD'
+    isMC: False
+  
+  MinimumBias_Data_2022D:
+    dataset: '/MinimumBias/Run2022D-22Sep2023-v1/MINIAOD'
+    isMC: False
+  
+  MinimumBias_Data_2022C:
+    dataset: '/MinimumBias/Run2022C-22Sep2023-v1/MINIAOD'
+    isMC: False

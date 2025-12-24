@@ -18,11 +18,13 @@ optional arguments:
                         Crab working area name
   -o OUTPUTDIR, --outputdir OUTPUTDIR
                         LFN Output high-level directory: the LFN will be saved in outputdir+workarea
+  -s SITE, --site SITE  Override CRAB storage site (config.Site.storageSite). If not set, YAML can provide it (samples.*.site or common.(data|mc).site), falling back to T3_CH_CERNBOX.
   -t TAG, --tag TAG     Production Tag extra
   -p PSETCFG, --psetcfg PSETCFG
                         Plugin configuration file
   -e [EXTRA ...], --extra [EXTRA ...]
                         Optional extra input files
+  -d DIR, --dir DIR     For --cmd status: CRAB task directory (e.g. crab_projects/...)
   -tt, --test           Flag a test job
 ```
 
@@ -32,18 +34,20 @@ It is checked automatically, so if you see a yaml format error please keep in mi
 
 ```
 expected_schema = Schema({
-    "common": {
-        "data": {
-            "lumimask": And(str, error="lumimask should be a string"),
-            "splitting": And(int, error="splitting should be an integer"),
-            "globaltag": And(str, error="globaltag should be a string"),
+    Optional("common"): {
+        Optional("data"): {
+            Optional("lumimask"): And(str, error="lumimask should be a string"),
+            Optional("splitting"): And(int, error="splitting should be an integer"),
+            Optional("globaltag"): And(str, error="globaltag should be a string"),
+            Optional("site"): And(str, error="site should be a string"),
         },
-        "mc": {
-            "splitting": And(int, error="splitting should be an integer"),
-            "globaltag": And(str, error="globaltag should be a string"),
+        Optional("mc"): {
+            Optional("splitting"): And(int, error="splitting should be an integer"),
+            Optional("globaltag"): And(str, error="globaltag should be a string"),
+            Optional("site"): And(str, error="site should be a string"),
         },
     },
-    "samples": And(dict, error="samples should be a dict with keys dataset (str), isMC (bool). Optional keys: globaltag (str), parts (list(int))")
+    "samples": And(dict, error="samples should be a dict with keys dataset (str), isMC (bool). Optional keys: globaltag (str), site (str), parts (list(int))")
     }
     )
 
@@ -52,9 +56,68 @@ samples_schema = Schema({
     "isMC": And(bool, error="isMC should be a boolean"),
     Optional("decay") : And(str, error="decay to reconstruct"),
     Optional("goldenjson") : And(str, error="golden json file path should be a string"),
+    Optional("lumimask") : And(str, error="lumimask should be a string"),
     Optional("globaltag") : And(str, error="globaltag should be a string"),
+    Optional("site") : And(str, error="site should be a string"),
     Optional("parts"): [And(int, error="parts should be a list of integers")]
 })
+```
+
+## Setup (CRAB)
+
+If CRAB client is not available in your environment, source it from CVMFS (works at CERN and most grid UI nodes):
+
+```bash
+source /cvmfs/cms.cern.ch/common/crab-setup.sh
+```
+
+Before submitting, make sure you have a valid proxy:
+
+```bash
+voms-proxy-init -voms cms
+voms-proxy-info -all
+```
+
+If you hit `ModuleNotFoundError: No module named 'past'` while importing CRAB libraries, install the python dependency `future`:
+
+```bash
+python3 -m pip install --user future
+```
+
+Optional but recommended: verify you can write to the site you plan to use:
+
+```bash
+crab checkwrite --site T2_CH_CERN
+```
+
+## Site configuration (storageSite)
+
+You can configure `config.Site.storageSite` in **three** ways; the precedence is:
+
+1. `--site` CLI option (overrides everything)
+2. per-sample YAML key `samples.<name>.site`
+3. YAML common key `common.(data|mc).site`
+4. fallback default: `T3_CH_CERNBOX`
+
+Example YAML:
+
+```yaml
+common:
+  data:
+    site: T2_CH_CERN
+    lumimask: 'https://.../Cert_Collisions2022_355100_362760_Golden.json'
+    splitting: 10
+    globaltag: '130X_dataRun3_Prompt_v3'
+  mc:
+    site: T2_CH_CERN
+    splitting: 10
+    globaltag: '124X_mcRun3_2022_realistic_v12'
+
+samples:
+  JetMET_Data_2022D:
+    dataset: '/JetMET0/Run2022D-10Dec2022-v2/MINIAOD'
+    isMC: False
+    # site: T3_CH_CERNBOX   # optional per-sample override
 ```
 
 

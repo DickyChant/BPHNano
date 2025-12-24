@@ -111,7 +111,7 @@ python submit_on_crab.py \
   -p ../test/run_UE_cfg.py \
   -w UE_NANO_2024 \
   -o /store/user/<your_username>/ \
-  -s T2_CH_CERN
+  # -s T2_CH_CERN   # optional: overrides YAML common.(data|mc).site / samples.*.site
 ```
 
 3. **Check job status**:
