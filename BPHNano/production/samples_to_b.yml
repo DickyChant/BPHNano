@@ -1,0 +1,228 @@
+common:
+  data:
+    site: 'T2_CN_Beijing'
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions22/Cert_Collisions2022_355100_362760_Golden.json 
+    splitting: 2
+    globaltag: 130X_dataRun3_v2
+  mc:
+    site: 'T2_CN_Beijing'
+    splitting: 2
+    globaltag: 130X_mcRun3_2022_realistic_v5
+
+samples:
+  pentaquark_data_2022C_part0:
+    dataset: /ParkingDoubleMuonLowMass0/Run2022C-10Dec2022-v2/MINIAOD 
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+  pentaquark_data_2022C_part1:
+    dataset: /ParkingDoubleMuonLowMass1/Run2022C-10Dec2022-v3/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+  pentaquark_data_2022C_part2:
+    dataset: /ParkingDoubleMuonLowMass2/Run2022C-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+  pentaquark_data_2022C_part3:
+    dataset: /ParkingDoubleMuonLowMass3/Run2022C-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+  pentaquark_data_2022C_part4:
+    dataset: /ParkingDoubleMuonLowMass4/Run2022C-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+  pentaquark_data_2022C_part5:
+    dataset: /ParkingDoubleMuonLowMass5/Run2022C-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+  pentaquark_data_2022C_part6:
+    dataset: /ParkingDoubleMuonLowMass6/Run2022C-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+  pentaquark_data_2022C_part7:
+    dataset: /ParkingDoubleMuonLowMass7/Run2022C-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+
+  pentaquark_data_2022D_part0:
+    dataset: /ParkingDoubleMuonLowMass0/Run2022D-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+  pentaquark_data_2022D_part1:
+    dataset: /ParkingDoubleMuonLowMass1/Run2022D-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+  pentaquark_data_2022D_part2:
+    dataset: /ParkingDoubleMuonLowMass2/Run2022D-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+  pentaquark_data_2022D_part3:
+    dataset: /ParkingDoubleMuonLowMass3/Run2022D-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+  pentaquark_data_2022D_part4:
+    dataset: /ParkingDoubleMuonLowMass4/Run2022D-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+  pentaquark_data_2022D_part5:
+    dataset: /ParkingDoubleMuonLowMass5/Run2022D-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+  pentaquark_data_2022D_part6:
+    dataset: /ParkingDoubleMuonLowMass6/Run2022D-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+  pentaquark_data_2022D_part7:
+    dataset: /ParkingDoubleMuonLowMass7/Run2022D-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+
+  pentaquark_data_2022E_part0:
+    dataset: /ParkingDoubleMuonLowMass0/Run2022E-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+  pentaquark_data_2022E_part1:
+    dataset: /ParkingDoubleMuonLowMass1/Run2022E-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False 
+  pentaquark_data_2022E_part2:
+    dataset: /ParkingDoubleMuonLowMass2/Run2022E-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+  pentaquark_data_2022E_part3:
+    dataset: /ParkingDoubleMuonLowMass3/Run2022E-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+  pentaquark_data_2022E_part4:
+    dataset: /ParkingDoubleMuonLowMass4/Run2022E-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+  pentaquark_data_2022E_part5:
+    dataset: /ParkingDoubleMuonLowMass5/Run2022E-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+  pentaquark_data_2022E_part6:
+    dataset: /ParkingDoubleMuonLowMass6/Run2022E-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+  pentaquark_data_2022E_part7:
+    dataset: /ParkingDoubleMuonLowMass7/Run2022E-10Dec2022-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_v2
+    isMC: False
+
+  pentaquark_data_2022F_part0:
+    dataset: /ParkingDoubleMuonLowMass0/Run2022F-22Sep2023-v1/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_PromptAnalysis_v1
+    isMC: False
+  pentaquark_data_2022F_part1:
+    dataset: /ParkingDoubleMuonLowMass1/Run2022F-22Sep2023-v1/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_PromptAnalysis_v1
+    isMC: False
+  pentaquark_data_2022F_part2:
+    dataset: /ParkingDoubleMuonLowMass2/Run2022F-22Sep2023-v1/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_PromptAnalysis_v1
+    isMC: False
+  pentaquark_data_2022F_part3:
+    dataset: /ParkingDoubleMuonLowMass3/Run2022F-22Sep2023-v1/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_PromptAnalysis_v1
+    isMC: False
+  pentaquark_data_2022F_part4:
+    dataset: /ParkingDoubleMuonLowMass4/Run2022F-22Sep2023-v1/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_PromptAnalysis_v1
+    isMC: False
+  pentaquark_data_2022F_part5:
+    dataset: /ParkingDoubleMuonLowMass5/Run2022F-22Sep2023-v1/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_PromptAnalysis_v1
+    isMC: False
+  pentaquark_data_2022F_part6:
+    dataset: /ParkingDoubleMuonLowMass6/Run2022F-22Sep2023-v1/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_PromptAnalysis_v1
+    isMC: False
+  pentaquark_data_2022F_part7:
+    dataset: /ParkingDoubleMuonLowMass7/Run2022F-22Sep2023-v1/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_PromptAnalysis_v1
+    isMC: False
+
+  pentaquark_data_2022G_part0:
+    dataset: /ParkingDoubleMuonLowMass0/Run2022G-22Sep2023-v1/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_PromptAnalysis_v1
+    isMC: False
+  pentaquark_data_2022G_part1:
+    dataset: /ParkingDoubleMuonLowMass1/Run2022G-22Sep2023-v1/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_PromptAnalysis_v1
+    isMC: False
+  pentaquark_data_2022G_part2:
+    dataset: /ParkingDoubleMuonLowMass2/Run2022G-22Sep2023-v1/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_PromptAnalysis_v1
+    isMC: False
+  pentaquark_data_2022G_part3:
+    dataset: /ParkingDoubleMuonLowMass3/Run2022G-22Sep2023-v1/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_PromptAnalysis_v1
+    isMC: False
+  pentaquark_data_2022G_part4:
+    dataset: /ParkingDoubleMuonLowMass4/Run2022G-22Sep2023-v2/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_PromptAnalysis_v1
+    isMC: False
+  pentaquark_data_2022G_part5:
+    dataset: /ParkingDoubleMuonLowMass5/Run2022G-22Sep2023-v1/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_PromptAnalysis_v1
+    isMC: False
+  pentaquark_data_2022G_part6:
+    dataset: /ParkingDoubleMuonLowMass6/Run2022G-22Sep2023-v1/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_PromptAnalysis_v1
+    isMC: False
+  pentaquark_data_2022G_part7:
+    dataset: /ParkingDoubleMuonLowMass7/Run2022G-22Sep2023-v1/MINIAOD
+    decay: pentaquark
+    globaltag: 130X_dataRun3_PromptAnalysis_v1
+    isMC: False
+  
+  pentaquark_mc_LambdaBToJpsiLambda_22:
+    dataset: /LambdaBToJpsiLambda_JpsiFilter_MuFilter_LambdaFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer22MiniAODv4-130X_mcRun3_2022_realistic_v5-v2/MINIAODSIM
+    decay: pentaquark
+    isMC: True
+    globaltag: 130X_mcRun3_2022_realistic_v5
+  
+  pentaquark_mc_LambdaBToJpsiLambda_22EE:
+    dataset: /LambdaBToJpsiLambda_JpsiFilter_MuFilter_LambdaFilter_TuneCP5_13p6TeV_pythia8-evtgen/Run3Summer22EEMiniAODv4-130X_mcRun3_2022_realistic_postEE_v6-v2/MINIAODSIM
+    decay: pentaquark
+    isMC: True
+    globaltag: 130X_mcRun3_2022_realistic_postEE_v6
