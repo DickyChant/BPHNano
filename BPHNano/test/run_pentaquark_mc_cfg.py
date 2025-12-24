@@ -42,19 +42,30 @@ options.register('skip', 0,
     "Skip first N events"
 )
 
+options.register('decay', 'pentaquark',
+    VarParsing.multiplicity.singleton,
+    VarParsing.varType.string,
+    "Decay channel keyword (used by CRAB)"
+)
+
+options.register('isMC', True,
+    VarParsing.multiplicity.singleton,
+    VarParsing.varType.bool,
+    "Is MC or data"
+)
+
 options.setDefault('maxEvents', 1000)
-options.setDefault('tag', 'pentaquark_mc')
 
 print(options)
 options.parseArguments()
-print("////////////////// BPHnano Pentaquark MC Test ////////////////////////")
-print("Running on MC (isMC=True)")
+print("////////////////// BPHnano Pentaquark Test ////////////////////////")
+print(f"Running on {'MC' if options.isMC else 'Data'} (isMC={options.isMC})")
 print("Analysis: Pentaquark (J/psi + p and J/psi + p + K)")
 print(options)
 print("/////////////////////////////////////////////////////////////////////////")
 
 globaltag = options.globalTag
-isMC = True  # Always True for MC
+isMC = options.isMC
 
 outputFileNANO = cms.untracked.string('bph_nano_pentaquark_mc.root')
 outputFileFEVT = cms.untracked.string('bph_edm_pentaquark_mc.root')

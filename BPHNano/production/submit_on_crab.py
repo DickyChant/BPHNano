@@ -7,8 +7,7 @@ import yaml
 
 import re
 import datetime
-
-from schema import Schema, And, Or, Optional, SchemaError
+import time
 
 import CRABClient
 
@@ -36,6 +35,7 @@ def parse_args():
     parser.add_argument('-p', '--psetcfg', default="../test/run_bphNano_cfg.py", help='Plugin configuration file')
     parser.add_argument('-e', '--extra', nargs='*', default=list(),  help='Optional extra input files')
     parser.add_argument('-tt', '--test', action='store_true', help='Flag a test job')
+    parser.add_argument('--delay', type=int, default=2, help='Seconds to sleep between submissions')
     return parser.parse_args()
     
 def submit(config):
@@ -55,50 +55,11 @@ def status(directory):
         print("Failed submitting task: %s" % (cle))
 
 
-expected_schema = Schema({
-    "common": {
-        "data": {
-            "lumimask": And(str, error="lumimask should be a string"),
-            "splitting": And(int, error="splitting should be an integer"),
-            "globaltag": And(str, error="globaltag should be a string"),
-        },
-        "mc": {
-            "splitting": And(int, error="splitting should be an integer"),
-            "globaltag": And(str, error="globaltag should be a string"),
-        },
-    },
-    "samples": And(dict, error="samples should be a dict with keys dataset (str), isMC (bool). Optional keys: globaltag (str), parts (list(int))")
-    }
-    )
-
-samples_schema = Schema({
-    "dataset": And(str, error="dataset should be a string"),
-    "isMC": And(bool, error="isMC should be a boolean"),
-    Optional("decay") : And(str, error="decay to reconstruct"), 
-    Optional("goldenjson") : And(str, error="golden json file path should be a string"),
-    Optional("globaltag") : And(str, error="globaltag should be a string"),
-    Optional("parts"): [And(int, error="parts should be a list of integers")]
-})
-
-
-def validate_yaml(data):
-    try:
-       expected_schema.validate(data)
-       for name, content in data["samples"].items():
-           samples_schema.validate(content)
-       print("YAML structure is valid.")
-    except SchemaError as e:
-       print("YAML structure is invalid:", e)
-       import sys
-       sys.exit(1)
-  
-
 if __name__ == '__main__':
 
     args = parse_args()
     with open(args.yaml, "r") as f:
         samples = yaml.safe_load(f) # Parse YAML file
-    validate_yaml(samples)
   
     if args.cmd == "submit":
         print("")
@@ -177,6 +138,8 @@ if __name__ == '__main__':
                 print(f"Submit Crab job for {name}")
                 print(config_)   
                 submit(config_)
+                if args.delay > 0:
+                    time.sleep(args.delay)
     elif args.cmd == "status":
         print(f"Getting crab status for {args.dir}")
         status(args.dir)
