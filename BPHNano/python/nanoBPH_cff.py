@@ -32,6 +32,7 @@ from PhysicsTools.BPHNano.EtaTo4Mu_cff import *
 from PhysicsTools.BPHNano.EtaTo2L2Pi_cff import *
 from PhysicsTools.BPHNano.LambdabToLambdahhBuilder import *
 from PhysicsTools.BPHNano.BDKstar_cff import *
+from PhysicsTools.BPHNano.Pentaquark_cff import *
 #from PhysicsTools.BPHNano.LambdabToLambdahhBuilder_v2 import *
 
 vertexTable.svSrc = cms.InputTag("slimmedSecondaryVertices")
@@ -172,4 +173,28 @@ def nanoAOD_customizeBToXLL(process,isMC):
        process.nanoSequence = cms.Sequence( process.nanoSequence + BToKMuMuSequence + BToKMuMuTables + KshortToPiPiSequence + KshortToPiPiTables + BToKshortMuMuSequence +BToKshortMuMuTables + KstarPiKSequence +  KstarPiKTables +KstarPiKTables+ BToKstarMuMuSequence + BToKstarMuMuTables )
     return process
 
+
+def nanoAOD_customizePentaquarkJpsiP(process, isMC):
+    """Customize for Pentaquark -> J/psi p search (Pc(4312), Pc(4440), Pc(4457))"""
+    if isMC:
+       process.nanoSequence = cms.Sequence( process.nanoSequence + PentaquarkToJpsiPMCSequence + PentaquarkToJpsiPMCTables )
+    else:
+       process.nanoSequence = cms.Sequence( process.nanoSequence + PentaquarkToJpsiPSequence + PentaquarkToJpsiPTables )
+    return process
+
+def nanoAOD_customizePentaquarkJpsiPK(process, isMC):
+    """Customize for Lambda_b -> J/psi p K analysis (Pentaquark Pc search in Lambda_b decays)"""
+    if isMC:
+       process.nanoSequence = cms.Sequence( process.nanoSequence + PentaquarkToJpsiPKMCSequence + PentaquarkToJpsiPKMCTables )
+    else:
+       process.nanoSequence = cms.Sequence( process.nanoSequence + PentaquarkToJpsiPKSequence + PentaquarkToJpsiPKTables )
+    return process
+
+def nanoAOD_customizePentaquark(process, isMC):
+    """Customize for full Pentaquark search (both J/psi + p and J/psi + p + K)"""
+    if isMC:
+       process.nanoSequence = cms.Sequence( process.nanoSequence + PentaquarkToJpsiPMCSequence + PentaquarkToJpsiPMCTables + PentaquarkToJpsiPKMCSequence + PentaquarkToJpsiPKMCTables )
+    else:
+       process.nanoSequence = cms.Sequence( process.nanoSequence + PentaquarkToJpsiPSequence + PentaquarkToJpsiPTables + PentaquarkToJpsiPKSequence + PentaquarkToJpsiPKTables )
+    return process
 
