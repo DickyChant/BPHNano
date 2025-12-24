@@ -18,7 +18,7 @@ Architecture should be el8 or el9
 ## Add the BPHNano package and build everything
 
 ```shell
-git clone git@github.com:gkaratha/BPHNano.git ./PhysicsTools
+git clone git@github.com:DickyChant/BPHNano.git ./PhysicsTools
 git cms-addpkg PhysicsTools/NanoAOD
 git cms-addpkg PhysicsTools/NanoAODTools
 scram b
