@@ -54,14 +54,47 @@ options.register('skip', 0,
     "Skip first N events"
 )
 
+options.register('decay', 'all',
+    VarParsing.multiplicity.singleton,
+    VarParsing.varType.string,
+    "Decay mode (not used for UE, but passed by CRAB)"
+)
+
 options.setDefault('maxEvents', 1000)
 options.setDefault('tag', 'UE')
 
-print(options)
-options.parseArguments()
-print("////////////////// UE nano running with options: ////////////////////////")
-print(options)
-print("/////////////////////////////////////////////////////////////////////////")
+# Handle CRAB parameter injection
+# CRAB injects parameters as global variables when using pyCfgParams
+_crab_mode = False
+if 'isMC' in globals():
+    _crab_mode = True
+    options.isMC = globals()['isMC']
+if 'reportEvery' in globals():
+    options.reportEvery = globals()['reportEvery']
+if 'tag' in globals():
+    options.tag = globals()['tag']
+if 'globalTag' in globals():
+    options.globalTag = globals()['globalTag']
+if 'decay' in globals():
+    options.decay = globals()['decay']
+if 'maxEvents' in globals():
+    options.maxEvents = globals()['maxEvents']
+
+if _crab_mode:
+    print("Running under CRAB with injected parameters")
+    print("isMC:", options.isMC)
+    print("reportEvery:", options.reportEvery)
+    print("tag:", options.tag)
+    print("globalTag:", options.globalTag)
+    print("decay:", options.decay)
+    print("maxEvents:", options.maxEvents)
+else:
+    # Normal command line execution
+    print(options)
+    options.parseArguments()
+    print("////////////////// UE nano running with options: ////////////////////////")
+    print(options)
+    print("/////////////////////////////////////////////////////////////////////////")
 
 # Use provided globalTag if specified, otherwise use defaults
 if options.globalTag == '130X_dataRun3_Prompt_v3':  # Default value
@@ -74,8 +107,9 @@ if options.isMC:
 else:
    options.tag+="_data"
 
-outputFileNANO = cms.untracked.string('_'.join(['ue_nano',options.tag])+'.root')
-outputFileFEVT = cms.untracked.string('_'.join(['ue_edm',options.tag])+'.root')
+# Use unified filename for CRAB compatibility
+outputFileNANO = cms.untracked.string('ue_nano.root')
+outputFileFEVT = cms.untracked.string('ue_edm.root')
 
 if not options.inputFiles:
    options.inputFiles = Defaultsamples(options.isMC)

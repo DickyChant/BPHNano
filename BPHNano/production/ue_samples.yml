@@ -1,7 +1,8 @@
 common:
   data:
     site: 'T2_CN_Beijing'
-    lumimask: 'https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions22/Cert_Collisions2022_355100_362760_Golden.json'
+    # lumimask removed for MinimumBias - these datasets have different run selections
+    # than physics datasets, so Golden JSON runs don't match MinimumBias runs
     splitting: 2
     globaltag: '130X_dataRun3_v2'
   mc:

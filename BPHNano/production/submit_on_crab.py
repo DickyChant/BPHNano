@@ -29,7 +29,7 @@ def parse_args():
     parser.add_argument('-c', '--cmd', default='submit', choices = ['submit', 'status'], help= 'Crab command')
     parser.add_argument('-f', '--filter', default='*', help = 'filter samples, POSIX regular expressions allowed') 
     parser.add_argument('-w', '--workarea', default='BPHNANO_%s' % production_tag, help = 'Crab working area name')
-    parser.add_argument('-o', '--outputdir', default= '/store/user/valukash/', help='LFN Output high-level directory: the LFN will be saved in outputdir+workarea ')
+    parser.add_argument('-o', '--outputdir', default= '/store/user/%s/' % os.environ.get('USER', 'sqian'), help='LFN Output high-level directory: the LFN will be saved in outputdir+workarea ')
     parser.add_argument('-s', '--site', default=None, help='Override CRAB storage site (config.Site.storageSite). If not set, the script will use YAML (samples.*.site or common.(data|mc).site) and fall back to T3_CH_CERNBOX.')
     parser.add_argument('-t', '--tag', default=production_tag, help='Production Tag extra')
     parser.add_argument('-p', '--psetcfg', default="../test/run_bphNano_cfg.py", help='Plugin configuration file')
@@ -255,9 +255,12 @@ if __name__ == '__main__':
                     'decay=%s' % decay,
                     'maxEvents=%s' % maxevents,
                  ]
-                config_.JobType.outputFiles = [
-                    '_'.join(['bph_nano', production_tag, 'mc' if sample_info['isMC'] else 'data', decay]) + '.root'
-                ]
+                # Determine output filename based on config file
+                if 'run_UE' in args.psetcfg or 'UE' in args.psetcfg:
+                    output_filename = 'ue_nano.root'
+                else:
+                    output_filename = 'bph_nano.root'
+                config_.JobType.outputFiles = [output_filename]
 
                 config_.Site.storageSite = site
 

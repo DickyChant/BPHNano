@@ -82,7 +82,9 @@ print("////////////////// BPHnano running with options: ////////////////////////
 print(options)
 print("/////////////////////////////////////////////////////////////////////////")
 
-globaltag = '124X_mcRun3_2022_realistic_v11' if options.isMC else '130X_dataRun3_Prompt_v3'
+# Use globalTag from pyCfgParams (set via options.register above)
+# It defaults to '130X_dataRun3_Prompt_v3' but can be overridden via pyCfgParams
+globaltag = options.globalTag
 
 
 if options.isMC:
@@ -93,8 +95,9 @@ else:
 options.tag+='_'
 options.tag+=options.decay
 
-outputFileNANO = cms.untracked.string('_'.join(['bph_nano',options.tag])+'.root')
-outputFileFEVT = cms.untracked.string('_'.join(['bph_edm',options.tag])+'.root')
+# Use unified filename for CRAB compatibility
+outputFileNANO = cms.untracked.string('bph_nano.root')
+outputFileFEVT = cms.untracked.string('bph_edm.root')
 
 
 if not options.inputFiles:
