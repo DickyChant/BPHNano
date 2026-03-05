@@ -1,30 +1,19 @@
-####################################### BPHnano #####################################
-#### Creates custom nanoAOD for multiple B final states. Final states are defined in
-#### _cfi.py under python. See bellow for runtime options
-## Author: G Karathanasis (gkaratha), CERN
-
+####################################### UE Nano #####################################
+#### Creates custom nanoAOD for Underlying Event studies (FSQ-15-007-like)
+#### Non-BPH configuration for underlying event measurement at 13.6 TeV
+## Author: Based on BPHnano structure
 
 from FWCore.ParameterSet.VarParsing import VarParsing
 import FWCore.ParameterSet.Config as cms
 
 
-def Defaultsamples(isMC,decay):
+def Defaultsamples(isMC):
     if isMC:
-       
-       if decay=="KLL":
-          return ['root://cms-xrd-global.cern.ch//store/mc/Run3Summer22MiniAODv4/BuToJpsiK_BMuonFilter_SoftQCDnonD_TuneCP5_13p6TeV_pythia8-evtgen/MINIAODSIM/130X_mcRun3_2022_realistic_v5-v2/2520000/ed50617a-980e-4b7a-8dc4-892e0f5ebd77.root']
-       elif decay=="KstarLL":
-           return ['root://cms-xrd-global.cern.ch//store/mc/Run3Summer22EEMiniAODv4/BdToJpsiKstar_BMuonFilter_SoftQCDnonD_TuneCP5_13p6TeV_pythia8-evtgen/MINIAODSIM/130X_mcRun3_2022_realistic_postEE_v6-v2/2540000/04415d2e-62f7-4c64-aa43-27cd63a43243.root']
-       elif decay=="KshortLL":
-          return ['root://cms-xrd-global.cern.ch//store/mc/Run3Summer23MiniAODv4/B0ToJpsiK0s_JpsiFilter_MuFilter_K0sFilter_TuneCP5_13p6TeV_pythia8-evtgen/MINIAODSIM/130X_mcRun3_2023_realistic_v14-v3/2820000/02555ce8-49a9-485f-9d46-3c5c49a8359c.root']
-       else:
-          return ['root://cms-xrd-global.cern.ch//store/mc/Run3Summer22MiniAODv4/BuToJpsiK_BMuonFilter_SoftQCDnonD_TuneCP5_13p6TeV_pythia8-evtgen/MINIAODSIM/130X_mcRun3_2022_realistic_v5-v2/2520000/ed50617a-980e-4b7a-8dc4-892e0f5ebd77.root',\
-                  'root://cms-xrd-global.cern.ch//store/mc/Run3Summer22EEMiniAODv4/BdToJpsiKstar_BMuonFilter_SoftQCDnonD_TuneCP5_13p6TeV_pythia8-evtgen/MINIAODSIM/130X_mcRun3_2022_realistic_postEE_v6-v2/2540000/04415d2e-62f7-4c64-aa43-27cd63a43243.root',\
-                  'root://cms-xrd-global.cern.ch//store/mc/Run3Summer23MiniAODv4/B0ToJpsiK0s_JpsiFilter_MuFilter_K0sFilter_TuneCP5_13p6TeV_pythia8-evtgen/MINIAODSIM/130X_mcRun3_2023_realistic_v14-v3/2820000/02555ce8-49a9-485f-9d46-3c5c49a8359c.root']
+        # Using QCD/MB samples for UE studies
+        return ['root://cms-xrd-global.cern.ch//store/mc/Run3Summer22MiniAODv4/QCD_PT-15to7000_TuneCP5_Flat_13p6TeV_pythia8/MINIAODSIM/124X_mcRun3_2022_realistic_v12-v2/30000/0009b550-7ebe-46b1-9bce-da8fb8c2cc32.root']
     else:
-       #return ['root://cms-xrd-global.cern.ch//store/data/Run2023B/ParkingDoubleMuonLowMass0/MINIAOD/PromptReco-v1/000/366/729/00000/27addd1b-2dfd-422e-9ee6-32540a1680c7.root'] 
-       return ['root://cms-xrd-global.cern.ch//store/data/Run2022D/ParkingDoubleMuonLowMass0/MINIAOD/10Dec2022-v2/25610000/79a953fb-ecee-457c-a06a-41352cf1ec10.root']
-
+        # Using MinimumBias or ZeroBias data
+        return ['root://cms-xrd-global.cern.ch//store/data/Run2022D/JetMET0/MINIAOD/10Dec2022-v2/50000/006a1c1a-e849-4c59-9de2-caf94c24ff81.root']
 
 
 options = VarParsing('python')
@@ -41,7 +30,6 @@ options.register('isMC', False,
     "Adds gen info/matching"
 )
 
-
 options.register('wantSummary', True,
     VarParsing.multiplicity.singleton,
     VarParsing.varType.bool,
@@ -54,7 +42,7 @@ options.register('wantFullRECO', False,
     "Produces additional EDM file"
     )
 
-options.register('reportEvery', 1,
+options.register('reportEvery', 100,
     VarParsing.multiplicity.singleton,
     VarParsing.varType.int,
     "Report every N events"
@@ -69,48 +57,69 @@ options.register('skip', 0,
 options.register('decay', 'all',
     VarParsing.multiplicity.singleton,
     VarParsing.varType.string,
-    "Options: all KLL KshortLL KstarLL"
+    "Decay mode (not used for UE, but passed by CRAB)"
 )
 
-
 options.setDefault('maxEvents', 1000)
-options.setDefault('tag', 'test')
+options.setDefault('tag', 'UE')
 
-print(options)
-options.parseArguments()
-print("////////////////// BPHnano running with options: ////////////////////////")
-print(options)
-print("/////////////////////////////////////////////////////////////////////////")
+# Handle CRAB parameter injection
+# CRAB injects parameters as global variables when using pyCfgParams
+_crab_mode = False
+if 'isMC' in globals():
+    _crab_mode = True
+    options.isMC = globals()['isMC']
+if 'reportEvery' in globals():
+    options.reportEvery = globals()['reportEvery']
+if 'tag' in globals():
+    options.tag = globals()['tag']
+if 'globalTag' in globals():
+    options.globalTag = globals()['globalTag']
+if 'decay' in globals():
+    options.decay = globals()['decay']
+if 'maxEvents' in globals():
+    options.maxEvents = globals()['maxEvents']
 
-# Use globalTag from pyCfgParams (set via options.register above)
-# It defaults to '130X_dataRun3_Prompt_v3' but can be overridden via pyCfgParams
-globaltag = options.globalTag
+if _crab_mode:
+    print("Running under CRAB with injected parameters")
+    print("isMC:", options.isMC)
+    print("reportEvery:", options.reportEvery)
+    print("tag:", options.tag)
+    print("globalTag:", options.globalTag)
+    print("decay:", options.decay)
+    print("maxEvents:", options.maxEvents)
+else:
+    # Normal command line execution
+    print(options)
+    options.parseArguments()
+    print("////////////////// UE nano running with options: ////////////////////////")
+    print(options)
+    print("/////////////////////////////////////////////////////////////////////////")
 
+# Use provided globalTag if specified, otherwise use defaults
+if options.globalTag == '130X_dataRun3_Prompt_v3':  # Default value
+    globaltag = '124X_mcRun3_2022_realistic_v11' if options.isMC else '130X_dataRun3_Prompt_v3'
+else:
+    globaltag = options.globalTag
 
 if options.isMC:
    options.tag+="_mc"
 else:
    options.tag+="_data"
 
-options.tag+='_'
-options.tag+=options.decay
-
 # Use unified filename for CRAB compatibility
-outputFileNANO = cms.untracked.string('bph_nano.root')
-outputFileFEVT = cms.untracked.string('bph_edm.root')
-
+outputFileNANO = cms.untracked.string('ue_nano.root')
+outputFileFEVT = cms.untracked.string('ue_edm.root')
 
 if not options.inputFiles:
-   options.inputFiles = Defaultsamples(options.isMC,options.decay)
+   options.inputFiles = Defaultsamples(options.isMC)
 
 annotation = '%s nevts:%d' % (outputFileNANO, options.maxEvents)
-
-
 
 # Process
 from Configuration.StandardSequences.Eras import eras
 
-process = cms.Process('BPHNANO',eras.Run3)
+process = cms.Process('UENANO',eras.Run3)
 
 # import of standard configurations
 process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
@@ -119,7 +128,7 @@ process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('Configuration.StandardSequences.GeometryRecoDB_cff')
 process.load("Configuration.StandardSequences.MagneticField_cff")
-process.load('PhysicsTools.BPHNano.nanoBPH_cff')
+process.load('PhysicsTools.BPHNano.nanoUE_cff')
 process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
@@ -145,7 +154,7 @@ process.nanoMetadata.strings.tag = annotation
 process.configurationMetadata = cms.untracked.PSet(
     annotation = cms.untracked.string(annotation),
     name = cms.untracked.string('Applications'),
-    version = cms.untracked.string('$Revision: 1.19 $')
+    version = cms.untracked.string('$Revision: 1.0 $')
 )
 
 # Output definition
@@ -175,52 +184,28 @@ process.NANOAODoutput = cms.OutputModule("NanoAODOutputModule",
       "keep nanoaodUniqueString_nanoMetadata_*_*",   # basic metadata
       "keep edmTriggerResults_*_*_*",
     )
-
 )
-
-
-# Additional output definition
 
 # Other statements
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, globaltag, '')
-from PhysicsTools.BPHNano.nanoBPH_cff import *
-if options.isMC:
-   process = nanoAOD_customizeMC(process)
 
-process = nanoAOD_customizeMuonBPH(process,options.isMC)
-process = nanoAOD_customizeDiMuonBPH(process,options.isMC)
-process = nanoAOD_customizeTrackBPH(process,options.isMC)
+from PhysicsTools.BPHNano.nanoUE_cff import *
 
-if options.decay == "KLL":
-   process = nanoAOD_customizeBToKLL(process,options.isMC)
+# Add UE specific customization (non-BPH nano for underlying event studies)
+# For MC, this also adds gen particles automatically
+process = nanoAOD_customizeUE(process, options.isMC)
 
-elif options.decay == "KstarLL":
-   process = nanoAOD_customizeBToKstarLL(process,options.isMC)
+print("Processing modules:", process.nanoSequenceUE)
 
-elif options.decay == "KshortLL": 
-   process = nanoAOD_customizeBToKshortLL(process,options.isMC)
-
-elif options.decay == "all":
-   process = nanoAOD_customizeBToXLL(process,options.isMC)
-
-else:
-   print("Undefined decay option")
-   import sys
-   sys.exit(1)
-
-print("processing modules:",process.nanoSequence)
-
-process.nanoAOD_BPH_step = cms.Path(process.nanoSequence)
-
+process.nanoAOD_UE_step = cms.Path(process.nanoSequenceUE)
 
 process.endjob_step = cms.EndPath(process.endOfProcess)
 process.FEVTDEBUGHLToutput_step = cms.EndPath(process.FEVTDEBUGHLToutput)
 process.NANOAODoutput_step = cms.EndPath(process.NANOAODoutput)
 
-
 process.schedule = cms.Schedule(
-    process.nanoAOD_BPH_step,
+    process.nanoAOD_UE_step,
     process.endjob_step,
     process.NANOAODoutput_step
     )
@@ -233,7 +218,7 @@ associatePatAlgosToolsTask(process)
 
 process.NANOAODoutput.SelectEvents = cms.untracked.PSet(
     SelectEvents = cms.vstring(
-        'nanoAOD_BPH_step',
+        'nanoAOD_UE_step',
     )
 )
 
@@ -246,5 +231,3 @@ from Configuration.StandardSequences.earlyDeleteSettings_cff import customiseEar
 process = customiseEarlyDelete(process)
 
 print(process.dumpPython())
-
-
