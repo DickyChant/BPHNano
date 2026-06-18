@@ -24,7 +24,7 @@ CountDiHs = cms.EDFilter("PATCandViewCountFilter",
     src       = cms.InputTag("DiHs")
 )  
 
-DiHsTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
+DiHsTable = cms.EDProducer("SimpleCompositeCandidateFlatTableProducer",
     src  = cms.InputTag("DiHs",'SelectedLambdaCollection'),
     cut  = cms.string(""), #we should not filter on cross linked collections
     name = cms.string("DiHs"),

@@ -5,13 +5,14 @@ from PhysicsTools.NanoAOD.common_cff import *
 
 EtaMuMu = cms.EDProducer(
     'DiMuonBuilder',
-    src = cms.InputTag('muonBPH', 'SelectedMuons'),
-    transientTracksSrc = cms.InputTag('muonBPH', 'SelectedTransientMuons'),
-    lep1Selection = cms.string('pt > 4 && abs(eta) < 2.4 && isMediumMuon && isGlobalMuon'),
-    lep2Selection = cms.string('pt > 3 && abs(eta) < 2.4 && isLooseMuon && isGlobalMuon'),
-    preVtxSelection  = cms.string('abs(userCand("l1").vz - userCand("l2").vz) <= 1.'
-                                  '&& charge() == 0'),
-    postVtxSelection = cms.string('')
+    src = cms.InputTag('muonBPH', 'AllMuons'),
+    transientTracksSrc = cms.InputTag('muonBPH', 'AllTransientMuons'),
+    #src = cms.InputTag('muonBPH', 'SelectedMuons'),
+    #transientTracksSrc = cms.InputTag('muonBPH', 'SelectedTransientMuons'),
+    lep1Selection = cms.string('pt > 2 && abs(eta) < 2.4 && isLooseMuon && isTrackerMuon '),
+    lep2Selection = cms.string('pt > 2 && abs(eta) < 2.4 && isLooseMuon && isTrackerMuon '),
+    preVtxSelection  = cms.string('charge() == 0'),
+    postVtxSelection = cms.string('userFloat("sv_prob") > 0.0')
 )
 
 CountEtaDiMuonBPH = cms.EDFilter("PATCandViewCountFilter",
@@ -22,7 +23,7 @@ CountEtaDiMuonBPH = cms.EDFilter("PATCandViewCountFilter",
 
 ########################### Tables ###########################
 
-EtaMuMuTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
+EtaMuMuTable = cms.EDProducer("SimpleCompositeCandidateFlatTableProducer",
     src = cms.InputTag("EtaMuMu:SelectedDiLeptons"),
     cut = cms.string(""), #we should not filter on cross linked collections
     name = cms.string("EtaMuMu"),
@@ -30,8 +31,12 @@ EtaMuMuTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
     singleton = cms.bool(False), # the number of entries is variable
     extension = cms.bool(False), # this is the main table for the muons
     variables = cms.PSet(CandVars,
-          fitted_mass = Var("userFloat('fitted_mass')", float, doc="Fitted dilepton mass"),
-          fitted_massErr = Var("userFloat('fitted_massErr')", float, doc="Fitted dilepton massErr"),
+          fitted_mass     = Var("userFloat('fitted_mass')", float, doc="Fitted dilepton mass"),
+          fitted_massErr  = Var("userFloat('fitted_massErr')", float, doc="Fitted dilepton massErr"),
+          fitted_pt       = Var("userFloat('fitted_pt')",      float, doc="Fitted dilepton pT"),
+          fitted_eta      = Var("userFloat('fitted_eta')",     float, doc="Fitted dilepton eta"),
+          fitted_phi      = Var("userFloat('fitted_phi')",     float, doc="Fitted dilepton phi"),
+          fitted_rapidity = Var("userFloat('fitted_rapidity')",float, doc="Fitted dilepton rapidity"),
           svprob = Var("userFloat('sv_prob')", float, doc="Vtx fit probability"),
           vtx_x =Var("userFloat('vtx_x')", float, doc="Vtx position in x"),
           vtx_y = Var("userFloat('vtx_y')", float, doc="Vtx position in y"),
@@ -47,10 +52,10 @@ EtaMuMuTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
 EtaMuMuBPHMCMatch = cms.EDProducer("MCMatcher",                  # cut on deltaR, deltaPt/Pt; pick best by deltaR
     src         = EtaMuMuTable.src,                           # final reco collection
     matched     = cms.InputTag("finalGenParticlesBPH"),       # final mc-truth particle collection
-    mcPdgId     = cms.vint32(443),                             # one or more PDG ID (443 = J/psi); absolute values (see below)
+    mcPdgId     = cms.vint32(221, 331),                       # eta or eta'
     checkCharge = cms.bool(False),                            # True = require RECO and MC objects to have the same charge
-    mcStatus    = cms.vint32(2),                              # PYTHIA status code (1 = stable, 2 = shower, 3 = hard scattering)
-    maxDeltaR   = cms.double(0.03),                           # Minimum deltaR for the match
+    mcStatus    = cms.vint32(22),                              # PYTHIA status code (1 = stable, 2 = shower, 3 = hard scattering)
+    maxDeltaR   = cms.double(0.1),                           # Minimum deltaR for the match
     maxDPtRel   = cms.double(0.5),                            # Minimum deltaPt/Pt for the match
     resolveAmbiguities    = cms.bool(True),                   # Forbid two RECO objects to match to the same GEN object
     resolveByMatchQuality = cms.bool(True),                   # False = just match input in order; True = pick lowest deltaR pair first
@@ -64,7 +69,7 @@ EtaMuMuBPHMCTable = cms.EDProducer("CandMCMatchTableProducerBPH",
     objType     = cms.string("Other"),
     objBranchName = cms.string("genPart"),
     genBranchName = cms.string("EtaMuMu"),
-    docString   = cms.string("MC matching to status==2 J/psi"),
+    docString   = cms.string("MC matching to status==2 "),
 )
 
 EtaMuMuSequence = cms.Sequence(EtaMuMu)

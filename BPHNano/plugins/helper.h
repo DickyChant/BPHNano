@@ -30,13 +30,14 @@ typedef std::vector<reco::TransientTrack> TransientTrackCollection;
 
 constexpr float K_MASS = 0.493677;
 constexpr float PI_MASS = 0.139571;
-constexpr float LEP_SIGMA = 0.0000001;
+constexpr float LEP_SIGMA = 0.001;
 constexpr float K_SIGMA = 0.000016;
 constexpr float PI_SIGMA = 0.000016;
 constexpr float MUON_MASS = 0.10565837;
 constexpr float ELECTRON_MASS = 0.000511;
 constexpr float LAMBDA_MASS = 1.115683;
 constexpr float LAMBDA_SIGMA = 0.000006;
+constexpr float ELECTRON_SIGMA = 0.00001;
 
 inline std::pair<float, float> min_max_dr(const std::vector< edm::Ptr<reco::Candidate> > & cands) {
   float min_dr = std::numeric_limits<float>::max();

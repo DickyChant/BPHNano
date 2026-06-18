@@ -117,7 +117,8 @@ void TrackMerger::produce(edm::StreamID, edm::Event &evt, edm::EventSetup const 
     const pat::PackedCandidate & trk = (iTrk < nTracks) ? (*tracks)[iTrk] : (*lostTracks)[iTrk - nTracks];
     //arranging cuts for speed
     if (!trk.hasTrackDetails()) continue;
-    if (fabs(trk.pdgId()) != 211 && fabs(trk.pdgId()) != 321) continue; //do we want also to keep muons?
+    //if (fabs(trk.pdgId()) != 211 && fabs(trk.pdgId()) != 321) continue; //do we want also to keep muons?
+    //if (fabs(trk.pdgId()) != 11 ) continue;
     if ( !track_selection_(trk) ) continue;
 
     //bool skipTrack = true;
@@ -149,6 +150,11 @@ void TrackMerger::produce(edm::StreamID, edm::Event &evt, edm::EventSetup const 
 
     // clean tracks wrt to all muons
     int matchedToMuon       = 0;
+    int isPFMuon       = -1;
+    int isGlobal       = -1;
+    int isTracker      = -1;
+    int isLoose        = -1;
+    int isMedium       = -1;
     for (const pat::Muon &imutmp : *muons) {
       for (unsigned int i = 0; i < imutmp.numberOfSourceCandidatePtrs(); ++i) {
         if (! ((imutmp.sourceCandidatePtr(i)).isNonnull() &&
@@ -158,6 +164,23 @@ void TrackMerger::produce(edm::StreamID, edm::Event &evt, edm::EventSetup const 
         const edm::Ptr<reco::Candidate> & source = imutmp.sourceCandidatePtr(i);
         if (source.id() == tracks.id() && source.key() == iTrk) {
           matchedToMuon = 1;
+          //std::cout << "Track pt/eta: " << trk.pt() << " " << trk.eta() << std::endl;
+          //std::cout << "Matched muon pt/eta: "
+          //          << imutmp.pdgId() << " "
+          //          << imutmp.pt() << " "
+          //          << imutmp.eta() << std::endl;
+	  isPFMuon       = imutmp.isPFMuon();
+          isGlobal       = imutmp.isGlobalMuon();
+          isTracker       = imutmp.isTrackerMuon();
+          isLoose       = imutmp.isLooseMuon();
+          isMedium       = imutmp.isMediumMuon();
+
+//  std::cout << "isPFMuon   = " << imutmp.isPFMuon()      << "\n";
+//  std::cout << "isGlobal   = " << imutmp.isGlobalMuon()  << "\n";
+//  std::cout << "isTracker  = " << imutmp.isTrackerMuon() << "\n";
+//std::cout << "Loose ID:  " << imutmp.isLooseMuon() << "\n";
+//std::cout << "Medium ID: " << imutmp.isMediumMuon() << "\n";
+//std::cout << "Tight ID:  " << imutmp.isTightMuon() << "\n";
           break;
         }
       }
@@ -204,6 +227,11 @@ void TrackMerger::produce(edm::StreamID, edm::Event &evt, edm::EventSetup const 
     //pcand.addUserFloat("dzTrg", dzTrg);
     pcand.addUserInt("isMatchedToMuon", matchedToMuon);
     pcand.addUserInt("isMatchedToEle", matchedToEle);
+    pcand.addUserInt("isPFMuon", isPFMuon);
+    pcand.addUserInt("isGlobal", isGlobal);
+    pcand.addUserInt("isTracker", isTracker);
+    pcand.addUserInt("isLoose", isLoose);
+    pcand.addUserInt("isMedium", isMedium);
     pcand.addUserInt("nValidHits", trk.bestTrack()->found());
     pcand.addUserInt("keyPacked", iTrk);
 

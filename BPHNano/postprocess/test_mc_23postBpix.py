@@ -2,27 +2,19 @@
 # using: 
 # Revision: 1.19 
 # Source: /local/reps/CMSSW/CMSSW/Configuration/Applications/python/ConfigBuilder.py,v 
-# with command line options: RECO --conditions 140X_dataRun3_Prompt_v4 --datatier NANOAOD --era Run3,run3_nanoAOD_124 --eventcontent NANOAOD --filein file:/eos/cms/store/user/dmytro/tmp/store+data+Run2022C+ParkingDoubleMuonLowMass0+MINIAOD+PromptReco-v1+000+357+271+00000+ea64a9c2-6b1f-4744-b4ea-41aa0e3c3e1b.root --fileout file:test_data.root --nThreads 4 -n 10000 --no_exec --python_filename test_data.py --scenario pp --step NANO --customise_commands=process.add_(cms.Service('InitRootHandlers', EnableIMT = cms.untracked.bool(False)))
+# with command line options: RECO --conditions 130X_mcRun3_2023_realistic_postBPix_v6 --datatier NANOAOD --era Run3_2023 --eventcontent NANOAODSIM --filein filein.root --fileout file:test_mc.root --nThreads 4 -n 1000 --no_exec --python_filename test_mc_23postBpix.py --scenario pp --step NANO --mc
 import FWCore.ParameterSet.Config as cms
 
+from Configuration.Eras.Era_Run3_2023_cff import Run3_2023
 
-from FWCore.ParameterSet.VarParsing import VarParsing
-options = VarParsing('python')
-
-options.parseArguments()
-#
-
-
-from Configuration.Eras.Era_Run3_cff import Run3
-from Configuration.Eras.Modifier_run3_nanoAOD_124_cff import run3_nanoAOD_124
-
-process = cms.Process('NANO',Run3,run3_nanoAOD_124)
+process = cms.Process('NANO',Run3_2023)
 
 # import of standard configurations
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
+process.load('SimGeneral.MixingModule.mixNoPU_cfi')
 process.load('Configuration.StandardSequences.GeometryRecoDB_cff')
 process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('PhysicsTools.NanoAOD.nano_cff')
@@ -31,20 +23,21 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(5000),
+    input = cms.untracked.int32(1000),
     output = cms.optional.untracked.allowed(cms.int32,cms.PSet)
 )
 
 # Input source
 process.source = cms.Source("PoolSource",
-    fileNames = cms.untracked.vstring('file:/afs/cern.ch/work/y/yilai/gamma/ParkingDoubleMuonLowMass0.root'),
+    fileNames = cms.untracked.vstring('file:/eos/user/y/yilai/Jpsi/JPsiMuMu_JPsiNoFilter_2MuPtEtaFilter_TuneCP5_13p6TeV-pythia8-evtgen.root'),
     secondaryFileNames = cms.untracked.vstring()
 )
 
 process.options = cms.untracked.PSet(
+    FailPath = cms.untracked.vstring(),
     IgnoreCompletely = cms.untracked.vstring(),
     Rethrow = cms.untracked.vstring(),
-    TryToContinue = cms.untracked.vstring(),
+    SkipEvent = cms.untracked.vstring(),
     accelerators = cms.untracked.vstring('*'),
     allowUnscheduled = cms.obsolete.untracked.bool,
     canDeleteEarly = cms.untracked.vstring(),
@@ -61,7 +54,6 @@ process.options = cms.untracked.PSet(
     forceEventSetupCacheClearOnNewRun = cms.untracked.bool(False),
     holdsReferencesToDeleteEarly = cms.untracked.VPSet(),
     makeTriggerResults = cms.obsolete.untracked.bool,
-    modulesToCallForTryToContinue = cms.untracked.vstring(),
     modulesToIgnoreForDeleteEarly = cms.untracked.vstring(),
     numberOfConcurrentLuminosityBlocks = cms.untracked.uint32(0),
     numberOfConcurrentRuns = cms.untracked.uint32(1),
@@ -75,68 +67,54 @@ process.options = cms.untracked.PSet(
 
 # Production Info
 process.configurationMetadata = cms.untracked.PSet(
-    annotation = cms.untracked.string('RECO nevts:10000'),
+    annotation = cms.untracked.string('RECO nevts:1000'),
     name = cms.untracked.string('Applications'),
     version = cms.untracked.string('$Revision: 1.19 $')
 )
 
 # Output definition
 
-process.NANOAODoutput = cms.OutputModule("NanoAODOutputModule",
+process.NANOAODSIMoutput = cms.OutputModule("NanoAODOutputModule",
     compressionAlgorithm = cms.untracked.string('LZMA'),
     compressionLevel = cms.untracked.int32(9),
     dataset = cms.untracked.PSet(
         dataTier = cms.untracked.string('NANOAOD'),
         filterName = cms.untracked.string('')
     ),
-    fileName = cms.untracked.string('file:test_data.root'),
-    outputCommands = process.NANOAODEventContent.outputCommands
+    fileName = cms.untracked.string('file:test_mc.root'),
+    outputCommands = process.NANOAODSIMEventContent.outputCommands
 )
 
 # Additional output definition
-# BPH
-#from PhysicsTools.NanoAOD.nano_cff import *
-from PhysicsTools.BPHNano.nanoBPH_cff import *
-#process = nanoAOD_customizeBDh_Data(process)
-
-# Lambdab0 -> lambda0 + J/psi
-#process = nanoAOD_customizeMuonBPH(process,False)
-#process = nanoAOD_customizeDiMuonBPH(process,False)
-#process = nanoAOD_customizeTrackBPH(process,False)
-#process = nanoAOD_customizeLambda(process, False)
-
-# Lambdab0 -> lambda0 + hh
-#process = nanoAOD_customizeLambdahh(process, False)
-
-#Eta
-#process = nanoAOD_customizeMuonBPH(process, False)
-#process = nanoAOD_customizeTrackBPH(process, False)
-#process = nanoAOD_customizeEta2Mu2PiBPH(process, False)
-
-# BDKstar
-process = nanoAOD_customizeBDKstar(process,False)
-
-process.nanoAOD_BPH_step = cms.Path(process.nanoSequence)
-
-process.MessageLogger.cerr.FwkReport.reportEvery = 500
 
 # Other statements
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, '140X_dataRun3_Prompt_v4', '')
+process.GlobalTag = GlobalTag(process.GlobalTag, '130X_mcRun3_2023_realistic_postBPix_v6', '')
+
+# BPH
+from PhysicsTools.NanoAOD.nano_cff import *
+from PhysicsTools.BPHNano.nanoBPH_cff import *
+process = nanoAOD_customizeMC(process)
+process = nanoAOD_customizeTrackBPH(process, True)
+process = nanoAOD_customizeMuonBPH(process, True)
+process = nanoAOD_customizeDiMuonBPH(process, True)
+process.nanoAOD_BPH_step = cms.Path(process.nanoSequence + cms.Sequence(genWeightsTableTask))
+
 
 # Path and EndPath definitions
-process.nanoAOD_step = cms.Path(process.nanoSequence)
+process.nanoAOD_step = cms.Path(process.nanoSequenceMC)
 process.endjob_step = cms.EndPath(process.endOfProcess)
-process.NANOAODoutput_step = cms.EndPath(process.NANOAODoutput)
+process.NANOAODSIMoutput_step = cms.EndPath(process.NANOAODSIMoutput)
 
 # Schedule definition
-#process.schedule = cms.Schedule(process.nanoAOD_step,process.endjob_step,process.NANOAODoutput_step)
-process.schedule = cms.Schedule(process.nanoAOD_BPH_step,process.endjob_step,process.NANOAODoutput_step)
+#process.schedule = cms.Schedule(process.nanoAOD_step,process.endjob_step,process.NANOAODSIMoutput_step)
+# BPH
+process.schedule = cms.Schedule(process.nanoAOD_BPH_step,process.endjob_step,process.NANOAODSIMoutput_step)
 from PhysicsTools.PatAlgos.tools.helpers import associatePatAlgosToolsTask
 associatePatAlgosToolsTask(process)
 
 #Setup FWK for multithreaded
-process.options.numberOfThreads = 2
+process.options.numberOfThreads = 4
 process.options.numberOfStreams = 0
 
 # customisation of the process.
@@ -152,7 +130,6 @@ process = nanoAOD_customizeCommon(process)
 
 # Customisation from command line
 
-process.add_(cms.Service('InitRootHandlers', EnableIMT = cms.untracked.bool(False)))
 # Add early deletion of temporary data products to reduce peak memory need
 from Configuration.StandardSequences.earlyDeleteSettings_cff import customiseEarlyDelete
 process = customiseEarlyDelete(process)

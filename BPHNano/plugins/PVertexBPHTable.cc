@@ -64,6 +64,7 @@ private:
   const edm::EDGetTokenT<edm::ValueMap<float>> pvsScore_;
   const StringCutObjectSelector<reco::Vertex> goodPvCut_;
   const std::string pvName_;
+  const bool slim_;   // if true, save only vz (+ the nPVtx count) to save space
 };
 
 //
@@ -73,7 +74,8 @@ PVertexBPHTable::PVertexBPHTable(const edm::ParameterSet& params)
     : pvs_(consumes<std::vector<reco::Vertex>>(params.getParameter<edm::InputTag>("pvSrc"))),
       pvsScore_(consumes<edm::ValueMap<float>>(params.getParameter<edm::InputTag>("pvSrc"))),
       goodPvCut_(params.getParameter<std::string>("goodPvCut"), true),
-      pvName_(params.getParameter<std::string>("pvName"))
+      pvName_(params.getParameter<std::string>("pvName")),
+      slim_(params.existsAs<bool>("slim") ? params.getParameter<bool>("slim") : false)
 
 {
   produces<nanoaod::FlatTable>("pv");
@@ -129,23 +131,25 @@ void PVertexBPHTable::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
    
   }
   auto table = std::make_unique<nanoaod::FlatTable>(pvscore.size(), pvName_, false,false);
-  table->addColumn<float>("score", pvscore, "", 10);
-  table->addColumn<float>("vx", vx, "", 10);
-  table->addColumn<float>("vy", vy, "", 10);
-  table->addColumn<float>("vz", vz, "", 10);
-  table->addColumn<float>("pt", pt, "", 10);
-  table->addColumn<float>("eta", eta, "", 10);
-  table->addColumn<float>("phi", phi, "", 10);
-  table->addColumn<float>("mass", mass, "", 10);
-  table->addColumn<float>("chi2", chi2, "", 10);
-  table->addColumn<float>("ndof", ndof, "", 10);
-  table->addColumn<float>("covXX", covXX, "", 10);
-  table->addColumn<float>("covYY", covYY, "", 10);
-  table->addColumn<float>("covZZ", covZZ, "", 10);
-  table->addColumn<float>("covXY", covXY, "", 10);
-  table->addColumn<float>("covXZ", covXZ, "", 10);
-  table->addColumn<float>("covYZ", covYZ, "", 10);
-  table->addColumn<uint8_t>("ntracks", ntracks, "");
+  table->addColumn<float>("vz", vz, "z position of the good PV [cm]", 10);
+  if (!slim_) {  // full all-PV table; slim mode keeps only vz (+ nPVtx) for candidate<->PV z-matching
+    table->addColumn<float>("score", pvscore, "", 10);
+    table->addColumn<float>("vx", vx, "", 10);
+    table->addColumn<float>("vy", vy, "", 10);
+    table->addColumn<float>("pt", pt, "", 10);
+    table->addColumn<float>("eta", eta, "", 10);
+    table->addColumn<float>("phi", phi, "", 10);
+    table->addColumn<float>("mass", mass, "", 10);
+    table->addColumn<float>("chi2", chi2, "", 10);
+    table->addColumn<float>("ndof", ndof, "", 10);
+    table->addColumn<float>("covXX", covXX, "", 10);
+    table->addColumn<float>("covYY", covYY, "", 10);
+    table->addColumn<float>("covZZ", covZZ, "", 10);
+    table->addColumn<float>("covXY", covXY, "", 10);
+    table->addColumn<float>("covXZ", covXZ, "", 10);
+    table->addColumn<float>("covYZ", covYZ, "", 10);
+    table->addColumn<uint8_t>("ntracks", ntracks, "");
+  }
 
 
   iEvent.put(std::move(table), "pv");
@@ -166,6 +170,7 @@ void PVertexBPHTable::fillDescriptions(edm::ConfigurationDescriptions& descripti
   desc.add<std::string>("goodPvCut")->setComment("selection on the primary vertex");
 
   desc.add<std::string>("pvName")->setComment("name of the flat table ouput");
+  desc.add<bool>("slim", false)->setComment("if true, save only vz (+ the nPVtx count)");
 
   descriptions.addWithDefaultLabel(desc);
 }

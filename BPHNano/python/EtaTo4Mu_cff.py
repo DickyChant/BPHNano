@@ -4,22 +4,19 @@ from PhysicsTools.NanoAOD.common_cff import *
 ########################### Selections ###########################
 EtaTo4Mu = cms.EDProducer(
     'EtaTo4MuBuilder',
+    muonCollection = cms.InputTag("slimmedMuons"), #same collection as in NanoAOD
     src = cms.InputTag('muonBPH', 'AllMuons'),
     transientTracksSrc = cms.InputTag('muonBPH', 'AllTransientMuons'),
-    #src = cms.InputTag('muonBPH', 'SelectedMuons'),
-    #transientTracksSrc = cms.InputTag('muonBPH', 'SelectedTransientMuons'),
-    lep1Selection = cms.string('pt > 4 && abs(eta) < 2.4 && isMediumMuon && isGlobalMuon'),
-    lep2Selection = cms.string('pt > 3 && abs(eta) < 2.4 && isLooseMuon && isGlobalMuon'),
-    lep3Selection = cms.string('pt > 2 && abs(eta) < 2.4 && isLooseMuon && isGlobalMuon'),
-    lep4Selection = cms.string('pt > 2 && abs(eta) < 2.4 && isLooseMuon && isGlobalMuon'),
-    preVtxSelection  = cms.string(
-        'abs(userCand("l1").vz - userCand("l2").vz) <= 1.'
-        '&& abs(userCand("l1").vz - userCand("l3").vz) <= 1.'
-        '&& abs(userCand("l1").vz - userCand("l4").vz) <= 1.'
-        '&& pt > 1. && ((mass > 0.45 && mass < 0.6)||(mass > 0.9 && mass < 1.0))'
-        '&& charge() == 0'
-    ),
-    postVtxSelection = cms.string('userFloat("sv_prob") > 0.0 && userFloat("fitted_mass") > 0.45 && userFloat("fitted_mass") < 1.2'),
+    #lep1Selection = cms.string('pt > 2.0 && abs(eta) < 2.4 && isLooseMuon && isTrackerMuon && isGlobalMuon'),
+    #lep2Selection = cms.string('pt > 1.0 && abs(eta) < 2.4 && isLooseMuon && isTrackerMuon'),
+    #lep3Selection = cms.string('pt > 2.0 && abs(eta) < 2.4 && isLooseMuon && isTrackerMuon && isGlobalMuon'),
+    #lep4Selection = cms.string('pt > 1.0 && abs(eta) < 2.4 && isLooseMuon && isTrackerMuon'),
+    lep1Selection = cms.string('pt > 2.0 && abs(eta) < 2.4 && isLooseMuon && isTrackerMuon'),
+    lep2Selection = cms.string('pt > 2.0 && abs(eta) < 2.4 && isLooseMuon && isTrackerMuon'),
+    lep3Selection = cms.string('pt > 1.0 && abs(eta) < 2.4 && isLooseMuon && isTrackerMuon'),
+    lep4Selection = cms.string('pt > 1.0 && abs(eta) < 2.4 && isLooseMuon && isTrackerMuon'),
+    preVtxSelection  = cms.string('pt > 5. && charge() == 0  && (mass > 0.45 && mass < 0.9)'),
+    postVtxSelection = cms.string('userFloat("sv_prob") > 0.0 && userFloat("fitted_mass") > 0.45 && userFloat("fitted_mass") < 0.9'),
 )
 
 CountEtaTo4MuonBPH = cms.EDFilter(
@@ -31,7 +28,7 @@ CountEtaTo4MuonBPH = cms.EDFilter(
 
 ########################### Tables ###########################
 EtaTo4MuTable = cms.EDProducer(
-    "SimpleCandidateFlatTableProducer",
+    "SimpleCompositeCandidateFlatTableProducer",
     src = cms.InputTag("EtaTo4Mu:Selected4Leptons"),
     cut = cms.string(""),
     name = cms.string("EtaTo4Mu"),
@@ -41,6 +38,10 @@ EtaTo4MuTable = cms.EDProducer(
     variables = cms.PSet(
         CandVars,
         fitted_mass = Var("userFloat('fitted_mass')", float, doc="Fitted four-lepton mass"),
+        fitted_eta = Var("userFloat('fitted_eta')", float, doc="Fitted four-lepton eta"),
+        fitted_pt = Var("userFloat('fitted_pt')", float, doc="Fitted four-lepton pt"),
+        fitted_phi = Var("userFloat('fitted_phi')", float, doc="Fitted four-lepton phi"),
+        fitted_rapidity   = Var("userFloat('fitted_rapidity')", float, doc="Fitted four-lepton rapidity"),
         fitted_massErr = Var("userFloat('fitted_massErr')", float, doc="Fitted four-lepton mass error"),
         svprob = Var("userFloat('sv_prob')", float, doc="Vertex fit probability"),
         vtx_x = Var("userFloat('vtx_x')", float, doc="Vertex position x"),
@@ -56,6 +57,18 @@ EtaTo4MuTable = cms.EDProducer(
         l2_idx = Var("userInt('l2_idx')", int, doc="Index of lepton 2"),
         l3_idx = Var("userInt('l3_idx')", int, doc="Index of lepton 3"),
         l4_idx = Var("userInt('l4_idx')", int, doc="Index of lepton 4"),
+        fitted_l1_pt       = Var("userFloat('fitted_l1_pt')",      float, doc="Fitted l1 pT"),
+        fitted_l1_eta      = Var("userFloat('fitted_l1_eta')",     float, doc="Fitted l1 eta"),
+        fitted_l1_phi      = Var("userFloat('fitted_l1_phi')",     float, doc="Fitted l1 phi"),
+        fitted_l2_pt       = Var("userFloat('fitted_l2_pt')",      float, doc="Fitted l2 pT"),
+        fitted_l2_eta      = Var("userFloat('fitted_l2_eta')",     float, doc="Fitted l2 eta"),
+        fitted_l2_phi      = Var("userFloat('fitted_l2_phi')",     float, doc="Fitted l2 phi"),
+        fitted_l3_pt       = Var("userFloat('fitted_l3_pt')",      float, doc="Fitted l3 pT"),
+        fitted_l3_eta      = Var("userFloat('fitted_l3_eta')",     float, doc="Fitted l3 eta"),
+        fitted_l3_phi      = Var("userFloat('fitted_l3_phi')",     float, doc="Fitted l3 phi"),
+        fitted_l4_pt       = Var("userFloat('fitted_l4_pt')",      float, doc="Fitted l4 pT"),
+        fitted_l4_eta      = Var("userFloat('fitted_l4_eta')",     float, doc="Fitted l4 eta"),
+        fitted_l4_phi      = Var("userFloat('fitted_l4_phi')",     float, doc="Fitted l4 phi"),
     )
 )
 

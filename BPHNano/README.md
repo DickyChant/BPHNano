@@ -20,25 +20,49 @@ process.schedule = cms.Schedule(process.nanoAOD_BPH_step,process.endjob_step,pro
 
 ```
 
+
 ## Processing examples
+* Configuration by MiniAOD campaigns
+  * Monte Carlo
+    * **RunIII2024Summer24MiniAODv6**
+      * Example:
+        * CMSSW_15_0_17
+      	* ```cmsDriver.py RECO --conditions 150X_mcRun3_2024_realistic_v2 --datatier NANOAOD --era Run3_2024 --eventcontent NANOAODSIM --filein filein.root --fileout file:test_mc.root --nThreads 4 -n 1000 --no_exec --python_filename test_mc.py --scenario pp --step NANO --mc ```
+    * **Run3Summer23BPixMiniAODv4**
+      * Example:
+        * CMSSW: CMSSW_13_0_24
+      	* ```cmsDriver.py RECO --conditions 130X_mcRun3_2023_realistic_postBPix_v6 --datatier NANOAOD --era Run3_2023 --eventcontent NANOAODSIM --filein filein.root --fileout file:test_mc.root --nThreads 4 -n 1000 --no_exec --python_filename test_mc_23postBpix.py --scenario pp --step NANO --mc ```
+    * **Run3Summer23MiniAODv4**
+      * era: Run3_2023,run3_nanoAOD_pre142X
+      * conditions: auto:phase1_2023_realistic
+      * Example:
+        * CMSSW: CMSSW_13_0_24
+      	* ```cmsDriver.py RECO --conditions 130X_mcRun3_2023_realistic_v15 --datatier NANOAOD --era Run3_2023 --eventcontent NANOAODSIM --filein filein.root --fileout file:test_mc.root --nThreads 4 -n 1000 --no_exec --python_filename test_mc_23preBpix.py --scenario pp --step NANO --mc ```
+    * **Run3Summer22EEMiniAODv4** 
+      * Example:
+        * CMSSW: CMSSW_13_0_24
+      	* ```cmsDriver.py RECO --conditions 130X_mcRun3_2022_realistic_postEE_v6 --datatier NANOAOD --era Run3 --eventcontent NANOAODSIM --filein filein.root --fileout file:test_mc.root --nThreads 4 -n 1000 --no_exec --python_filename test_mc_22postEE.py --scenario pp --step NANO --mc ```
     * **Run3Summer22MiniAODv4** 
-      * era: Run3
-      * conditions: auto:phase1_2022_realistic
       * Example:
-      	* ```cmsDriver.py RECO --conditions auto:phase1_2022_realistic --datatier NANOAOD --era Run3 --eventcontent NANOAODSIM --filein /store/mc/Run3Summer22MiniAODv4/DstarToD0Pi_D0To2Mu_MuFilter_SoftQCDnonD_TuneCP5_13p6TeV_pythia8-evtgen/MINIAODSIM/130X_mcRun3_2022_realistic_v5-v1/30000/71ec4425-d76b-446d-9d89-a7b250c56568.root --fileout file:test_mc.root --nThreads 8 -n 1000 --no_exec --python_filename test_mc.py --scenario pp --step NANO --mc --customise_commands="process.add_(cms.Service('InitRootHandlers', EnableIMT = cms.untracked.bool(False)))"```
+        * CMSSW: CMSSW_13_0_24
+      	* ```cmsDriver.py RECO --conditions 130X_mcRun3_2022_realistic_v5 --datatier NANOAOD --era Run3 --eventcontent NANOAODSIM --filein filein.root --fileout file:test_mc.root --nThreads 4 -n 1000 --no_exec --python_filename test_mc_22preEE.py --scenario pp --step NANO --mc ```
+
+
   * Data
-    * **Run2022**
-      * era: Run3,run3_nanoAOD_124
-      * conditions: 140X_dataRun3_Prompt_v4
+    * **Run2024**
+      * era: Run3,run3_nanoAOD_pre142X
+      * conditiongs: auto:run3_data_prompt
       * Example:
-      	* ```cmsDriver.py RECO --conditions 140X_dataRun3_Prompt_v4 --datatier NANOAOD --era Run3,run3_nanoAOD_124 --eventcontent NANOAOD --filein file:/eos/cms/store/user/dmytro/tmp/store+data+Run2022C+ParkingDoubleMuonLowMass0+MINIAOD+PromptReco-v1+000+357+271+00000+ea64a9c2-6b1f-4744-b4ea-41aa0e3c3e1b.root --fileout file:test_data.root --nThreads 4 -n 10000 --no_exec --python_filename test_data.py --scenario pp --step NANO --customise_commands="process.add_(cms.Service('InitRootHandlers', EnableIMT = cms.untracked.bool(False)))"```
+      	* ```cmsDriver.py RECO --conditions auto:run3_data_prompt --datatier NANOAOD --era Run3,run3_nanoAOD_pre142X --eventcontent NANOAOD --filein filein.root --fileout file:test_data.root --nThreads 4 -n 10000 --no_exec --python_filename test_data_24.py --scenario pp --step NANO ```
+    * **Run2023**
+      * era: Run3,run3_nanoAOD_pre142X
+      * conditiongs: auto:run3_data_prompt
+      * Example:
+      	* ```cmsDriver.py RECO --conditions auto:run3_data_prompt --datatier NANOAOD --era Run3,run3_nanoAOD_124 --eventcontent NANOAOD --filein filein.root --fileout file:test_data.root --nThreads 4 -n 10000 --no_exec --python_filename test_data_23.py --scenario pp --step NANO ```
+    * **Run2022**
+      * era: Run3,run3_nanoAOD_pre142X
+      * conditiongs: auto:run3_data_prompt
+      * Example:
+      	* ```cmsDriver.py RECO --conditions auto:run3_data_prompt --datatier NANOAOD --era Run3,run3_nanoAOD_124 --eventcontent NANOAOD --filein filein.root --fileout file:test_data.root --nThreads 4 -n 10000 --no_exec --python_filename test_data_22.py --scenario pp --step NANO ```
 
-## Optional Filtering
-If you want to add event filtering to the commands below you just need to modify the step option the following way
-* `--step NANO,FILTER:PhysicsTools/BPHNano/BDhFilter_cff.BDhFilterSequence`
 
-## test commands
-```
-cmsRun test/run_BDh_cfg.py inputFiles="file:postprocess/condor/3d1335a2-5a61-46ec-919f-ea4c8bb01898.root" outputFiles="data.root" maxEvents=10 isMC=false skip=40
-cmsRun test/run_BDh_cfg.py inputFiles="file:postprocess/condor/MiniAODv4_237.root" outputFiles="MC.root" maxEvents=500  skip=0
-```

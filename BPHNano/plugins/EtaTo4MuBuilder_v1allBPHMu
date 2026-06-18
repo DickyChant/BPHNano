@@ -24,7 +24,6 @@
 #include <numeric>
 #include "KinVtxFitter.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
-#include "DataFormats/BeamSpot/interface/BeamSpot.h"
 
 template<typename Lepton>
 class EtaTo4LepBuilder : public edm::global::EDProducer<> {
@@ -44,8 +43,7 @@ public:
     bFieldToken_{esConsumes<MagneticField, IdealMagneticFieldRecord>()},
     muonSrc_{consumes<pat::MuonCollection>( cfg.getParameter<edm::InputTag>("muonCollection") )},
     src_{consumes<LeptonCollection>( cfg.getParameter<edm::InputTag>("src") )},
-    ttracks_src_{consumes<TransientTrackCollection>( cfg.getParameter<edm::InputTag>("transientTracksSrc") )},
-    beamspot_{consumes<reco::BeamSpot>( cfg.getParameter<edm::InputTag>("beamSpot") )} {
+    ttracks_src_{consumes<TransientTrackCollection>( cfg.getParameter<edm::InputTag>("transientTracksSrc") )} {
     produces<pat::CompositeCandidateCollection>("Selected4Leptons");
   }
 
@@ -67,7 +65,6 @@ private:
 
   const edm::EDGetTokenT<LeptonCollection> src_;
   const edm::EDGetTokenT<TransientTrackCollection> ttracks_src_;
-  const edm::EDGetTokenT<reco::BeamSpot> beamspot_;
 };
 
 template<typename Lepton>
@@ -86,9 +83,6 @@ void EtaTo4LepBuilder<Lepton>::produce(edm::StreamID, edm::Event &evt, edm::Even
 
   edm::Handle<TransientTrackCollection> ttracks;
   evt.getByToken(ttracks_src_, ttracks);
-
-  edm::Handle<reco::BeamSpot> beamspot;
-  evt.getByToken(beamspot_, beamspot);
 
   // output
   std::unique_ptr<pat::CompositeCandidateCollection> ret_value(new pat::CompositeCandidateCollection());
@@ -187,19 +181,15 @@ void EtaTo4LepBuilder<Lepton>::produce(edm::StreamID, edm::Event &evt, edm::Even
       edm::Ptr<Lepton> l2_ptr(leptons, l2_idx);
       if (!l2_selection_(*l2_ptr)) continue;
       
-      for (size_t l3_idx = l2_idx + 1; l3_idx < nLep; ++l3_idx) {
-        //if (l3_idx==l1_idx || l3_idx==l2_idx) continue;
+      for (size_t l3_idx = 0; l3_idx < nLep; ++l3_idx) {
+        if (l3_idx==l1_idx || l3_idx==l2_idx) continue;
      	edm::Ptr<Lepton> l3_ptr(leptons, l3_idx);
         if (!l3_selection_(*l3_ptr)) continue;
 
         for (size_t l4_idx = l3_idx + 1; l4_idx < nLep; ++l4_idx) {
-          //if (l4_idx==l1_idx || l4_idx==l2_idx) continue;
+          if (l4_idx==l1_idx || l4_idx==l2_idx) continue;
   	  edm::Ptr<Lepton> l4_ptr(leptons, l4_idx);
           if (!l4_selection_(*l4_ptr)) continue;
-
-	  // any 4 leptons
-
-	  //if(l1_ptr->pt()< l3_ptr->pt()) continue;
 
           pat::CompositeCandidate four_lepton;
           math::PtEtaPhiMLorentzVector l1_p4(
@@ -295,34 +285,11 @@ void EtaTo4LepBuilder<Lepton>::produce(edm::StreamID, edm::Event &evt, edm::Even
           four_lepton.addUserFloat("sv_chi2", fitter.chi2());
           four_lepton.addUserFloat("sv_ndof", fitter.dof());
           four_lepton.addUserFloat("sv_prob", fitter.prob());
-	  auto fit_p4 = fitter.fitted_p4();
           four_lepton.addUserFloat("fitted_mass", fitter.success() ? fitter.fitted_candidate().mass() : -1);
-          four_lepton.addUserFloat("fitted_pt", fitter.success() ? fit_p4.pt() : -1);
-          four_lepton.addUserFloat("fitted_eta", fitter.success() ? fit_p4.eta() : -1);
-          four_lepton.addUserFloat("fitted_phi", fitter.success() ? fit_p4.phi() : -1);
-          four_lepton.addUserFloat("fitted_rapidity", fitter.success() ? fit_p4.Rapidity() : -1);
-
-	  four_lepton.addUserFloat("fitted_massErr", fitter.success() ? sqrt(fitter.fitted_candidate().kinematicParametersError().matrix()(6, 6)) : -1);
+          four_lepton.addUserFloat("fitted_massErr", fitter.success() ? sqrt(fitter.fitted_candidate().kinematicParametersError().matrix()(6, 6)) : -1);
           four_lepton.addUserFloat("vtx_x", four_lepton.vx());
           four_lepton.addUserFloat("vtx_y", four_lepton.vy());
           four_lepton.addUserFloat("vtx_z", four_lepton.vz());
-
-          // ---- prompt / displacement variables (Upsilon is prompt: expect l_xy ~ 0) ----
-          auto lxy = l_xy(fitter, *beamspot);
-          four_lepton.addUserFloat("l_xy",     lxy.value());
-          four_lepton.addUserFloat("l_xy_unc", lxy.error());
-          four_lepton.addUserFloat("l_xy_sig", (lxy.error() > 0) ? lxy.value() / lxy.error() : -1.f);
-          four_lepton.addUserFloat("cos_theta_2D",        cos_theta_2D(fitter, *beamspot, four_lepton.p4()));
-          four_lepton.addUserFloat("fitted_cos_theta_2D", cos_theta_2D(fitter, *beamspot, fit_p4));
-          // z-prompt proxy (no PV needed): largest pairwise |dz| among the four muons
-          {
-            std::array<const Lepton*, 4> mu4{{ l1_ptr.get(), l2_ptr.get(), l3_ptr.get(), l4_ptr.get() }};
-            float max_mu_dz = 0.f;
-            for (size_t i = 0; i < 4; ++i)
-              for (size_t j = i + 1; j < 4; ++j)
-                max_mu_dz = std::max(max_mu_dz, (float)std::abs(mu4[i]->vz() - mu4[j]->vz()));
-            four_lepton.addUserFloat("max_mu_dz", max_mu_dz);
-          }
 
           if (!post_vtx_selection_(four_lepton)) continue;
           //std::cout<<"pass pot fit cut "<<fitter.fitted_candidate().mass()<<std::endl;

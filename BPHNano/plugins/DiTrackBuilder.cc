@@ -98,16 +98,15 @@ void DiTrackBuilder::produce(edm::StreamID, edm::Event &evt, edm::EventSetup con
     for (size_t trk2_idx = trk1_idx + 1; trk2_idx < pfcands->size(); ++trk2_idx) {
 
       edm::Ptr<pat::CompositeCandidate> trk2_ptr( pfcands, trk2_idx );
-      //if (trk1_ptr->charge() == trk2_ptr->charge()) continue;
-      
-     // trk1 should have higher pT, and assume it to be proton
-     if(trk1_ptr->pt()<trk2_ptr->pt()){
-         std::cout<<"trk 1, 2 pt: "<< trk1_ptr->pt()<<" "<< trk2_ptr->pt()<<std::endl;
-	 continue;
-     }
-
-
       if (!trk2_selection_(*trk2_ptr)) continue;
+        
+      if ((trk1_ptr->charge() + trk2_ptr->charge())!=0) continue;
+
+      // trk1 should have higher pT, and assume it to be proton
+      //if(trk1_ptr->pt()<trk2_ptr->pt()){
+      //    std::cout<<"trk 1, 2 pt: "<< trk1_ptr->pt()<<" "<< trk2_ptr->pt()<<std::endl;
+      //    continue;
+      //}
 
       // Loop in all possible hypothesis
       // for ( std::pair<double, double> masses : { std::pair<double, double>(trk1_mass_, trk2_mass_), std::pair<double, double>(trk2_mass_, trk1_mass_) } ) {

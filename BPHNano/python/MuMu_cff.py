@@ -5,17 +5,14 @@ from PhysicsTools.NanoAOD.common_cff import *
 
 MuMu = cms.EDProducer(
     'DiMuonBuilder',
-    src = cms.InputTag('muonBPH', 'SelectedMuons'),
-    transientTracksSrc = cms.InputTag('muonBPH', 'SelectedTransientMuons'),
-    #src = cms.InputTag('muonBPH', 'AllMuons'),
-    #transientTracksSrc = cms.InputTag('muonBPH', 'AllTransientMuons'),
-    lep1Selection = cms.string('pt > 0.3 && abs(eta) < 2.4 && isLooseMuon && isGlobalMuon'),
-    lep2Selection = cms.string('pt > 0.3 && abs(eta) < 2.4 && isLooseMuon && isGlobalMuon'),
-    preVtxSelection  = cms.string('abs(userCand("l1").vz - userCand("l2").vz) <= 1.'
-                                  '&& 2.9 < mass() && mass() < 3.3 '
-                                  '&& charge() == 0'),
-    postVtxSelection = cms.string('2.9 < userFloat("fitted_mass") && userFloat("fitted_mass") < 3.3'
-                                  '&& userFloat("sv_prob") > 0.001')
+    #src = cms.InputTag('muonBPH', 'SelectedMuons'),
+    #transientTracksSrc = cms.InputTag('muonBPH', 'SelectedTransientMuons'),
+    src = cms.InputTag('muonBPH', 'AllMuons'),
+    transientTracksSrc = cms.InputTag('muonBPH', 'AllTransientMuons'),
+    lep1Selection = cms.string('pt > 2 && abs(eta) < 2.4 && isLooseMuon  '),
+    lep2Selection = cms.string('pt > 2 && abs(eta) < 2.4 && isLooseMuon '),
+    preVtxSelection  = cms.string('charge() == 0'),
+    postVtxSelection = cms.string('userFloat("sv_prob") > 0.005')
 )
 
 CountDiMuonBPH = cms.EDFilter("PATCandViewCountFilter",
@@ -26,7 +23,7 @@ CountDiMuonBPH = cms.EDFilter("PATCandViewCountFilter",
 
 ########################### Tables ###########################
 
-MuMuTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
+MuMuTable = cms.EDProducer("SimpleCompositeCandidateFlatTableProducer",
     src = cms.InputTag("MuMu:SelectedDiLeptons"),
     cut = cms.string(""), #we should not filter on cross linked collections
     name = cms.string("MuMu"),
@@ -34,8 +31,12 @@ MuMuTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
     singleton = cms.bool(False), # the number of entries is variable
     extension = cms.bool(False), # this is the main table for the muons
     variables = cms.PSet(CandVars,
-          fitted_mass = Var("userFloat('fitted_mass')", float, doc="Fitted dilepton mass"),
-          fitted_massErr = Var("userFloat('fitted_massErr')", float, doc="Fitted dilepton massErr"),
+          fitted_mass     = Var("userFloat('fitted_mass')", float, doc="Fitted dilepton mass"),
+          fitted_massErr  = Var("userFloat('fitted_massErr')", float, doc="Fitted dilepton massErr"),
+          fitted_pt       = Var("userFloat('fitted_pt')",      float, doc="Fitted dilepton pT"),
+          fitted_eta      = Var("userFloat('fitted_eta')",     float, doc="Fitted dilepton eta"),
+          fitted_phi      = Var("userFloat('fitted_phi')",     float, doc="Fitted dilepton phi"),
+          fitted_rapidity = Var("userFloat('fitted_rapidity')",float, doc="Fitted dilepton rapidity"),
           svprob = Var("userFloat('sv_prob')", float, doc="Vtx fit probability"),
           vtx_x =Var("userFloat('vtx_x')", float, doc="Vtx position in x"),
           vtx_y = Var("userFloat('vtx_y')", float, doc="Vtx position in y"),

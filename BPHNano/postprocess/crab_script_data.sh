@@ -36,5 +36,5 @@ ls
 
 # Run post-processing script (if needed)
 echo ">>> Running post-processing..."
-python3 BDh_postproc_data.py
+python3 BPH_postproc_data.py
 fi

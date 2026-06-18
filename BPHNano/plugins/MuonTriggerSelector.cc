@@ -200,25 +200,28 @@ void MuonTriggerSelector::produce(edm::Event& iEvent, const edm::EventSetup& iSe
             allmuons_out->back().addUserFloat("trgDR", -1);
             allmuons_out->back().addUserFloat("trgDPT", -1);
             allmuons_out->back().addUserInt("looseId", -1);
-	    continue;
+            allmuons_out->back().addUserInt("rawmuon_idx", iMuo);
+            for (unsigned int i = 0; i < HLTPaths_.size(); i++) allmuons_out->back().addUserInt(HLTPaths_[i], -1);
+    }else{
+            muons_out->emplace_back(muon);
+            trans_muons_out->emplace_back(muonTT);
+            muons_out->back().addUserInt("isTriggering", muonIsTrigger[iMuo]);
+            muons_out->back().addUserFloat("trgDR", muonDR[iMuo]);
+            muons_out->back().addUserFloat("trgDPT", muonDPT[iMuo]);
+            muons_out->back().addUserInt("looseId", loose_id[iMuo]);
+	    muons_out->back().addUserInt("rawmuon_idx", iMuo);
+
+            allmuons_out->back().addUserInt("isTriggering", muonIsTrigger[iMuo]);
+            allmuons_out->back().addUserFloat("trgDR", muonDR[iMuo]);
+            allmuons_out->back().addUserFloat("trgDPT", muonDPT[iMuo]);
+            allmuons_out->back().addUserInt("looseId", loose_id[iMuo]);
+            allmuons_out->back().addUserInt("rawmuon_idx", iMuo);
+
+            for (unsigned int i = 0; i < HLTPaths_.size(); i++){
+		    muons_out->back().addUserInt(HLTPaths_[i], fires[iMuo][i]);
+		    allmuons_out->back().addUserInt(HLTPaths_[i], fires[iMuo][i]);
+	    }
     }
-
-    muons_out->emplace_back(muon);
-    muons_out->back().addUserInt("isTriggering", muonIsTrigger[iMuo]);
-    muons_out->back().addUserFloat("trgDR", muonDR[iMuo]);
-    muons_out->back().addUserFloat("trgDPT", muonDPT[iMuo]);
-    muons_out->back().addUserInt("looseId", loose_id[iMuo]);
-
-    allmuons_out->back().addUserInt("isTriggering", muonIsTrigger[iMuo]);
-    allmuons_out->back().addUserFloat("trgDR", muonDR[iMuo]);
-    allmuons_out->back().addUserFloat("trgDPT", muonDPT[iMuo]);
-    allmuons_out->back().addUserInt("looseId", loose_id[iMuo]);
-
-
-    for (unsigned int i = 0; i < HLTPaths_.size(); i++)
-      muons_out->back().addUserInt(HLTPaths_[i], fires[iMuo][i]);
-    trans_muons_out->emplace_back(muonTT);
-
   }
 
   // All muon

@@ -26,7 +26,7 @@ CountLambdaPPi = cms.EDFilter("PATCandViewCountFilter",
     src       = cms.InputTag("LambdaToPPi")
 )  
 
-LambdaToPPiTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
+LambdaToPPiTable = cms.EDProducer("SimpleCompositeCandidateFlatTableProducer",
     src  = cms.InputTag("LambdaToPPi",'SelectedLambdaCollection'),
     cut  = cms.string(""), #we should not filter on cross linked collections
     name = cms.string("LambdaToPPi"),

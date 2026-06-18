@@ -3,8 +3,6 @@
 # Example of running the postprocessor to skim events with a cut, and 
 # adding a new variable using a Module.
 #
-from BDh_Producer import *
-
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import PostProcessor
 from importlib import import_module
 import os
@@ -45,10 +43,7 @@ fnames = ["test_mc.root"]
 
 p = PostProcessor(outputDir=".",
                   inputFiles=fnames,
-                  #cut="nLambdabToLambdaMuMu>=1 || nLambdabToLambdahh>=1",
-                  cut="nLambdabToLambdahh>=1",
-                  #cut="nLdb0>=1",
-                  #modules=[BdhModuleConstr()],
+                  cut="nMuMu>=1",
                   provenance=True,
                   maxEntries=50000000, #just read the first maxEntries events
                   )

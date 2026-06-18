@@ -5,6 +5,7 @@ from PhysicsTools.NanoAOD.simpleCandidateFlatTableProducer_cfi import simpleCand
 
 pVertexTable = cms.EDProducer("PVertexBPHTable",
     pvSrc = cms.InputTag("offlineSlimmedPrimaryVertices"),
-    goodPvCut = cms.string("!isFake && ndof > 4 && abs(z) <= 24 && position.Rho <= 2"), 
-    pvName = cms.string("PVtx")
+    goodPvCut = cms.string("!isFake && ndof > 4 && abs(z) <= 24 && position.Rho <= 2"),
+    pvName = cms.string("PVtx"),
+    slim = cms.bool(False),   # True -> only PVtx_vz (+ nPVtx); flipped on in nanoAOD_customizeUpsilon4*
 )

@@ -3,7 +3,8 @@ from PhysicsTools.NanoAOD.common_cff import *
 
 Path=["HLT_DoubleMu4_3_LowMass", "HLT_DoubleMu2_Jpsi_LowPt", "HLT_Dimuon0_Jpsi3p5_Muon2"]
 
-Path=["HLT_DoubleMu4_3_LowMass"]
+Path=["HLT_DoubleMu4_3_LowMass", "HLT_Mu4_L1DoubleMu", "HLT_Mu0_L1DoubleMu", "HLT_Mu8", "HLT_Dimuon10_Upsilon_y1p4"]
+#Path=["HLT_DoubleMu4_3_LowMass"]
 
 use_allmuon=True
 if use_allmuon:
@@ -16,8 +17,8 @@ muonBPH = cms.EDProducer("MuonTriggerSelector",
                          bits           = cms.InputTag("TriggerResults", "", "HLT"),
                          prescales      = cms.InputTag("patTrigger"),
                          objects        = cms.InputTag("slimmedPatTrigger"),
-                         maxdR_matching = cms.double(0.3), ##for the output trigger matched collection
-                         muonSelection  = cms.string("pt > 2.0 && abs(eta) < 2.4"), ## on the fly selection
+                         maxdR_matching = cms.double(0.1), ##for the output trigger matched collection
+                         muonSelection  = cms.string("pt > 1.0 && abs(eta) < 2.4"), ## on the fly selection
                          HLTPaths       = cms.vstring(Path), ### comma to the softMuonsOnly
                         )
 
@@ -28,7 +29,7 @@ countTrgMuons = cms.EDFilter("PATCandViewCountFilter",
     src       = cms.InputTag("muonBPH", name_muon)
 )
 
-muonBPHTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
+muonBPHTable = cms.EDProducer("SimplePATMuonFlatTableProducer",
     src  = cms.InputTag("muonBPH:"+name_muon),
     cut  = cms.string(""), #we should not filter on cross linked collections
     name = cms.string("Muon"),
@@ -59,6 +60,7 @@ muonBPHTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
         isGlobal    = Var("isGlobalMuon", bool, doc="muon is global muon"),
         isTracker   = Var("isTrackerMuon", bool, doc="muon is tracker muon"),
         looseId     = Var("passed('CutBasedIdLoose')", bool, doc="cut-based ID, medium WP"),
+        rawmuon_idx = Var("userInt('rawmuon_idx')", int, doc="rawmuon_idx"),
         mediumId    = Var("passed('CutBasedIdMedium')", bool, doc="cut-based ID, medium WP"),
         tightId     = Var("passed('CutBasedIdTight')", bool, doc="cut-based ID, tight WP"),
         softId      = Var("passed('SoftCutBasedId')", bool, doc="soft cut-based ID"),
@@ -70,8 +72,10 @@ muonBPHTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
         isTriggering    = Var("userInt('isTriggering')", int, doc="flag the reco muon is also triggering"),
         matched_dr      = Var("userFloat('trgDR')", float, doc="dr with the matched triggering muon"),
         matched_dpt     = Var("userFloat('trgDPT')", float, doc="dpt/pt with the matched triggering muon"),
-        #fired_HLT_DoubleMu4_3_LowMass = Var("userInt('HLT_DoubleMu4_3_LowMass')", int, doc="reco muon fired this trigger"),
-        #fired_HLT_DoubleMu4_LowMass_Displaced = Var("userInt('HLT_DoubleMu4_LowMass_Displaced')", int, doc="reco muon fired this trigger")
+        fired_HLT_DoubleMu4_3_LowMass = Var("userInt('HLT_DoubleMu4_3_LowMass')", int, doc="reco muon fired this trigger"),
+        fired_HLT_Mu4_L1DoubleMu = Var("userInt('HLT_Mu4_L1DoubleMu')", int, doc="reco muon fired this trigger"),
+        fired_HLT_Mu0_L1DoubleMu = Var("userInt('HLT_Mu0_L1DoubleMu')", int, doc="reco muon fired this trigger"),
+        fired_HLT_Mu8 = Var("userInt('HLT_Mu8')", int, doc="reco muon fired this trigger"),
     ),
 )
 

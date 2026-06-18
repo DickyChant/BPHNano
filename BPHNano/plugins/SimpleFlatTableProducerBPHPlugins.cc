@@ -1,12 +1,4 @@
-#include "PhysicsTools/NanoAOD/interface/SimpleFlatTableProducer.h"
-
-#include "DataFormats/PatCandidates/interface/CompositeCandidate.h"
-typedef SimpleFlatTableProducer<pat::CompositeCandidate> SimpleCompositeCandidateFlatTableProducer;
-
-//not really useful in the end because lowptgsf tracks come with BDT taht is not part of GsfTracks
-#include "DataFormats/GsfTrackReco/interface/GsfTrack.h"
-typedef SimpleFlatTableProducer<reco::GsfTrack> SimpleGsfTrackFlatTableProducer;
-
-#include "FWCore/Framework/interface/MakerMacros.h"
-DEFINE_FWK_MODULE(SimpleCompositeCandidateFlatTableProducer);
-DEFINE_FWK_MODULE(SimpleGsfTrackFlatTableProducer);
+// CMSSW >= 15X: the SimpleFlatTableProducer specializations BPHNano used to ship here
+// (SimpleCompositeCandidateFlatTableProducer, SimpleGsfTrackFlatTableProducer) are now
+// provided centrally by PhysicsTools/NanoAOD. Re-defining them causes 'WrongPluginLoaded'.
+// This translation unit is intentionally empty for the 15X port.

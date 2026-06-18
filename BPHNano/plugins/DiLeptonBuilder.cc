@@ -77,6 +77,7 @@ void DiLeptonBuilder<Lepton>::produce(edm::StreamID, edm::Event &evt, edm::Event
     for (size_t l2_idx = l1_idx + 1; l2_idx < leptons->size(); ++l2_idx) {
       edm::Ptr<Lepton> l2_ptr(leptons, l2_idx);
       if (!l2_selection_(*l2_ptr)) continue;
+      if ((l1_ptr->charge() + l2_ptr->charge())!=0) continue;
 
       pat::CompositeCandidate lepton_pair;
       lepton_pair.setP4(l1_ptr->p4() + l2_ptr->p4());
@@ -109,8 +110,26 @@ void DiLeptonBuilder<Lepton>::produce(edm::StreamID, edm::Event &evt, edm::Event
       lepton_pair.addUserFloat("sv_chi2", fitter.chi2());
       lepton_pair.addUserFloat("sv_ndof", fitter.dof()); // float??
       lepton_pair.addUserFloat("sv_prob", fitter.prob());
-      lepton_pair.addUserFloat("fitted_mass", fitter.success() ? fitter.fitted_candidate().mass() : -1);
-      lepton_pair.addUserFloat("fitted_massErr", fitter.success() ? sqrt(fitter.fitted_candidate().kinematicParametersError().matrix()(6, 6)) : -1);
+      if (fitter.success()) {
+	  auto fit_p4 = fitter.fitted_p4();
+          const auto &cov    = fitter.fitted_candidate().kinematicParametersError().matrix();
+      
+          lepton_pair.addUserFloat("fitted_pt",         fit_p4.pt());
+          lepton_pair.addUserFloat("fitted_eta",        fit_p4.eta());
+          lepton_pair.addUserFloat("fitted_phi",        fit_p4.phi());
+          lepton_pair.addUserFloat("fitted_mass",       fit_p4.mass());
+          lepton_pair.addUserFloat("fitted_massErr",    std::sqrt(cov(6,6))); // mass variance element
+          lepton_pair.addUserFloat("fitted_rapidity",   fit_p4.Rapidity());
+      } else {
+          // Store -1 values as “fit failed” flag
+          lepton_pair.addUserFloat("fitted_pt",        -1);
+          lepton_pair.addUserFloat("fitted_eta",       -1);
+          lepton_pair.addUserFloat("fitted_phi",       -1);
+          lepton_pair.addUserFloat("fitted_mass",      -1);
+          lepton_pair.addUserFloat("fitted_massErr",   -1);
+          lepton_pair.addUserFloat("fitted_rapidity",  -1);
+      }
+
       lepton_pair.addUserFloat("vtx_x", lepton_pair.vx());
       lepton_pair.addUserFloat("vtx_y", lepton_pair.vy());
       lepton_pair.addUserFloat("vtx_z", lepton_pair.vz());
