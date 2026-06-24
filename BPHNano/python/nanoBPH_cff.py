@@ -38,6 +38,7 @@ from PhysicsTools.BPHNano.BToMuMuGammaConv_cff import *
 from PhysicsTools.BPHNano.UpsilonTo4Mu_cff import *
 from PhysicsTools.BPHNano.UpsilonTo2Mu2E_cff import *
 from PhysicsTools.BPHNano.lowPtEleTracks_cff import *   # LowPtElectron e-legs for 2mu2e
+from PhysicsTools.BPHNano.ZToLLV_cff import *            # Z -> ll V (V=phi->KK / rho->pipi)
 from PhysicsTools.BPHNano.LambdabToLambdahhBuilder import *
 from PhysicsTools.BPHNano.BDKstar_cff import *
 #from PhysicsTools.BPHNano.LambdabToLambdahhBuilder_v2 import *
@@ -277,6 +278,31 @@ def nanoAOD_customizeUpsilon4L(process, isMC):
     process.nanoSequence.associate(lowPtElectronTask, lowPtElectronTablesTask)
     # slim the all-PV BPHNano table to z-only (PVtx_vz + nPVtx) for candidate<->PV z-matching;
     # central PV_* (leading PV) + beamspot l_xy still cover event selection + the prompt cut.
+    pVertexTable.slim = cms.bool(True)
+    return process
+
+
+def nanoAOD_customizeZLLV(process, isMC, channels=('mumu', 'ee')):
+    """Z -> l l V , V -> h+ h-  (V = phi->KK / rho->pipi ; l = mu and/or e). [first-observation search]
+
+    `channels` selects the lepton final states. tracksBPH (the V daughters, from
+    packedPFCandidates) is always added; 'mumu' adds Muon (muonBPH) + the WIDE dimuon
+    (MuMuWide) + ZToMuMu{Phi,Rho}; 'ee' adds ZElectrons (slimmedElectrons transient tracks)
+    + DiEle + ZToEE{Phi,Rho}. The general-track TABLE (~52 KB/evt) is NOT added.
+    Collect with a standard SINGLE-lepton HLT (run cfg: HLT_IsoMu24/Mu50 for mumu on /Muon,
+    HLT_Ele30_WPTight_Gsf for ee on /EGamma); skim >=1 candidate via OR'd filter paths.
+    """
+    add = [tracksBPHSequenceMC if isMC else tracksBPHSequence]   # V daughters, always
+    if 'mumu' in channels:
+        add += [muonBPHSequenceMC if isMC else muonBPHSequence,
+                muonBPHTablesMC  if isMC else muonBPHTables,
+                ZToMuMuVSequence, ZToMuMuVTables]
+    if 'ee' in channels:
+        add += [ZToEEVSequence, ZToEEVTables]
+    seq = process.nanoSequence
+    for a in add:
+        seq = cms.Sequence(seq + a)
+    process.nanoSequence = seq
     pVertexTable.slim = cms.bool(True)
     return process
 
