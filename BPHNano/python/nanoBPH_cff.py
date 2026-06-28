@@ -293,10 +293,13 @@ def nanoAOD_customizeZLLV(process, isMC, channels=('mumu', 'ee')):
     HLT_Ele30_WPTight_Gsf for ee on /EGamma); skim >=1 candidate via OR'd filter paths.
     """
     add = [tracksBPHSequenceMC if isMC else tracksBPHSequence]   # V daughters, always
-    if 'mumu' in channels:
+    if ('mumu' in channels) or ('jpsiphi' in channels):          # muons: shared by both mu channels
         add += [muonBPHSequenceMC if isMC else muonBPHSequence,
-                muonBPHTablesMC  if isMC else muonBPHTables,
-                ZToMuMuVSequence, ZToMuMuVTables]
+                muonBPHTablesMC  if isMC else muonBPHTables]
+    if 'mumu' in channels:
+        add += [ZToMuMuVSequence, ZToMuMuVTables]
+    if 'jpsiphi' in channels:                                    # H/Z -> J/psi(mumu) phi(KK)
+        add += [HZToJpsiPhiSequence, HZToJpsiPhiTables]
     if 'ee' in channels:
         add += [ZToEEVSequence, ZToEEVTables]
     seq = process.nanoSequence

@@ -32,24 +32,41 @@ MuMuWide = cms.EDProducer(
     postVtxSelection   = cms.string('userFloat("sv_prob") > 0.0'),
 )
 
+# ---- J/psi-windowed dimuon: the J/psi(->mu mu) leg of H/Z -> J/psi phi. Unlike MuMuWide (Z's
+# prompt continuum pair), here the dimuon IS the J/psi resonance (mass 2.9-3.3). BParking
+# HLT_DoubleMu4_3_LowMass fires on this soft dimuon even when the J/psi is boosted (pt 4/3). ----
+MuMuJpsi = cms.EDProducer(
+    'DiMuonBuilder',
+    src                = cms.InputTag('muonBPH', 'AllMuons'),
+    transientTracksSrc = cms.InputTag('muonBPH', 'AllTransientMuons'),
+    lep1Selection      = cms.string('pt > 4 && abs(eta) < 2.4 && isLooseMuon'),
+    lep2Selection      = cms.string('pt > 3 && abs(eta) < 2.4 && isLooseMuon'),
+    preVtxSelection    = cms.string('charge() == 0 && mass() > 2.9 && mass() < 3.3'),
+    postVtxSelection   = cms.string('userFloat("sv_prob") > 0.0'),
+)
+
 # ---- shared track selection (V daughters): a Z->V gives an energetic (~30-45 GeV) V, so its
 # kaons/pions are ~GeV+; pt>1.0 keeps signal while cutting the pileup-track combinatorics ~10x ----
 _TRK_SEL = 'pt > 1.0 && abs(eta) < 2.5'
 
-# common prompt + Z-window post-fit cut; Z is prompt -> small l_xy. KEPT LOOSE on purpose:
-# the m(ll) Z-VETO (signal = m(ll) below the Z; Z->ll+hadrons bkg = m(ll)=m_Z) is applied
-# OFFLINE, not here -- baking it into the skim would discard the m(ll)~91 CONTROL region needed
-# for background estimation. m(ll) is stored (`mll`). Isolation also stored, not cut (experimental).
-_Z_POST = ('userFloat("sv_prob") > 0.001 '
-           '&& userFloat("fitted_mass") > 70 && userFloat("fitted_mass") < 110 '
-           '&& userFloat("l_xy") < 0.1')
+# common prompt + parent-window post-fit cut; the parent (Z at 91; for J/psi phi ALSO H at 125) is
+# PROMPT -> small l_xy. KEPT LOOSE on purpose: the m(ll) cut (Z-VETO for Z->Vll so the m(ll)~91
+# CONTROL region survives for bkg estimation; J/psi-WINDOW for J/psi phi) is the dilepton builder's
+# job, and isolation is stored not cut (experimental). [par_lo,par_hi] = fitted parent-mass window:
+# Z default 70-110; H/Z->J/psi phi uses 70-130 to span BOTH the Z (91) and the Higgs (125).
+def _parent_post(par_lo, par_hi):
+    return ('userFloat("sv_prob") > 0.001 '
+            '&& userFloat("fitted_mass") > %g && userFloat("fitted_mass") < %g '
+            '&& userFloat("l_xy") < 0.1' % (par_lo, par_hi))
 
 
-def _zllv(dileptons, lep_ttracks, lep_mass, lep_sigma, trk_mass, trk_sigma, v_lo, v_hi):
+def _zllv(dileptons, lep_ttracks, lep_mass, lep_sigma, trk_mass, trk_sigma, v_lo, v_hi,
+          par_lo=70, par_hi=110):
     """Configure one ZToLLVBuilder instance for a given lepton+track hypothesis and V window.
     The [v_lo, v_hi] di-track window is enforced EARLY in the builder (vMassMin/vMassMax) so the
     expensive candidate-build + 4-track fit only runs for pairs inside the rho/phi window -> bounds
-    the combinatorics; the fitted-mass window repeats it post-fit."""
+    the combinatorics; the fitted-mass window repeats it post-fit. [par_lo,par_hi] is the parent
+    (4-track) mass window: Z->Vll uses 70-110, H/Z->J/psi phi uses 70-130."""
     return cms.EDProducer(
         'ZToLLVBuilder',
         dileptons             = cms.InputTag(dileptons),
@@ -65,9 +82,9 @@ def _zllv(dileptons, lep_ttracks, lep_mass, lep_sigma, trk_mass, trk_sigma, v_lo
         vMassMax = cms.double(v_hi),
         trk1Selection = cms.string(_TRK_SEL),
         trk2Selection = cms.string(_TRK_SEL),
-        preVtxSelection = cms.string('charge() == 0 && mass() > 60 && mass() < 120'),
+        preVtxSelection = cms.string('charge() == 0 && mass() > %g && mass() < %g' % (par_lo - 10, par_hi + 10)),
         postVtxSelection = cms.string(
-            _Z_POST + ' && userFloat("fitted_ditrack_mass") > %g '
+            _parent_post(par_lo, par_hi) + ' && userFloat("fitted_ditrack_mass") > %g '
             '&& userFloat("fitted_ditrack_mass") < %g' % (v_lo, v_hi)),
     )
 
@@ -78,6 +95,14 @@ ZToMuMuPhi = _zllv('MuMuWide:SelectedDiLeptons', ('muonBPH', 'AllTransientMuons'
 # rho0(770) -> pi+pi- : broad window
 ZToMuMuRho = _zllv('MuMuWide:SelectedDiLeptons', ('muonBPH', 'AllTransientMuons'),
                    MUON_MASS, MUON_SIGMA, PI_MASS, H_SIGMA, 0.50, 1.00)
+
+# ---- H/Z -> J/psi(->mu mu) phi(->K+K-)  [exclusive boson decay to two vector mesons] ----
+# J/psi-windowed dimuon (MuMuJpsi) + phi-windowed K+K- ditrack + prompt 4-track vertex, parent
+# window 70-130 spanning BOTH the Z (91) and the Higgs (125). The SAME ZToLLVBuilder reconstructs
+# it (mll here = m(J/psi), fitted_mass = parent). Table 7 of Koenig-Neubert: B(H->J/psi phi)~1e-9
+# (signature gorgeous, SM rate tiny -> limit/anomalous-Yukawa probe); also probes Z->J/psi phi.
+HZToJpsiPhi = _zllv('MuMuJpsi:SelectedDiLeptons', ('muonBPH', 'AllTransientMuons'),
+                    MUON_MASS, MUON_SIGMA, K_MASS, H_SIGMA, 1.00, 1.05, par_lo=70, par_hi=130)
 
 
 ########################### Tables ###########################
@@ -122,6 +147,7 @@ def _zllv_table(src, name, doc):
 
 ZToMuMuPhiTable = _zllv_table('ZToMuMuPhi', 'ZToMuMuPhi', 'Z -> mu mu phi(->KK)')
 ZToMuMuRhoTable = _zllv_table('ZToMuMuRho', 'ZToMuMuRho', 'Z -> mu mu rho(->pipi)')
+HZToJpsiPhiTable = _zllv_table('HZToJpsiPhi', 'HZToJpsiPhi', 'H/Z -> J/psi(->mumu) phi(->KK) [mll = m(J/psi), fitted_mass = parent]')
 
 
 def _count(src):
@@ -132,6 +158,7 @@ def _count(src):
 
 CountZToMuMuPhi = _count('ZToMuMuPhi')
 CountZToMuMuRho = _count('ZToMuMuRho')
+CountHZToJpsiPhi = _count('HZToJpsiPhi')
 
 
 ########################### e+e- channel (Z -> ee V) ###########################
@@ -171,6 +198,9 @@ CountZToEERho = _count('ZToEERho')
 # mu mu V : MuMuWide feeds both V hypotheses
 ZToMuMuVSequence = cms.Sequence(MuMuWide + ZToMuMuPhi + ZToMuMuRho)
 ZToMuMuVTables   = cms.Sequence(ZToMuMuPhiTable + ZToMuMuRhoTable)
+# J/psi phi (mu mu K K) : MuMuJpsi feeds the phi(KK) hypothesis; parent window spans Z(91)+H(125)
+HZToJpsiPhiSequence = cms.Sequence(MuMuJpsi + HZToJpsiPhi)
+HZToJpsiPhiTables   = cms.Sequence(HZToJpsiPhiTable)
 # ee V : ZElectrons -> DiEle feeds both V hypotheses
 ZToEEVSequence = cms.Sequence(ZElectrons + DiEle + ZToEEPhi + ZToEERho)
 ZToEEVTables   = cms.Sequence(ZToEEPhiTable + ZToEERhoTable)

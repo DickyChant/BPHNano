@@ -20,7 +20,7 @@ options.register('reportEvery', 100, VarParsing.multiplicity.singleton, VarParsi
 options.register('outputFiles', 'zllv_nano.root', VarParsing.multiplicity.singleton, VarParsing.varType.string, "output NanoAOD")
 options.register('trigger', '', VarParsing.multiplicity.singleton, VarParsing.varType.string, "space-separated single-muon HLT wildcards to require (empty=none)")
 options.register('skim', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int, "1: keep events with >=1 (phi OR rho) candidate; 0: keep all")
-options.register('mode', 'mumu', VarParsing.multiplicity.singleton, VarParsing.varType.string, "lepton channel: 'mumu' (/Muon), 'ee' (/EGamma), or 'all'")
+options.register('mode', 'mumu', VarParsing.multiplicity.singleton, VarParsing.varType.string, "channel: 'mumu' (Z->mumuV /Muon), 'ee' (Z->eeV /EGamma), 'jpsiphi' (H/Z->J/psi phi, /Muon or Parking), 'all' (mumu+ee), 'allj' (+jpsiphi)")
 options.register('wideWindow', 0, VarParsing.multiplicity.singleton, VarParsing.varType.int, "diagnostic: open V+Z windows, accept all fits")
 options.register('nThreads', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int, "cmsRun threads/streams (set = CRAB JobType.numCores)")
 options.setDefault('maxEvents', -1)
@@ -68,7 +68,8 @@ process.NANOAODoutput = cms.OutputModule("NanoAODOutputModule",
     ),
 )
 
-_channels = {'mumu': ('mumu',), 'ee': ('ee',), 'all': ('mumu', 'ee')}[options.mode]
+_channels = {'mumu': ('mumu',), 'ee': ('ee',), 'jpsiphi': ('jpsiphi',),
+             'all': ('mumu', 'ee'), 'allj': ('mumu', 'ee', 'jpsiphi')}[options.mode]
 from PhysicsTools.BPHNano.nanoBPH_cff import nanoAOD_customizeMC, nanoAOD_customizeZLLV
 if options.isMC:
     process = nanoAOD_customizeMC(process)
@@ -78,6 +79,7 @@ process = nanoAOD_customizeZLLV(process, options.isMC, channels=_channels)
 _builders = []
 if 'mumu' in _channels: _builders += [process.ZToMuMuPhi, process.ZToMuMuRho]
 if 'ee'   in _channels: _builders += [process.ZToEEPhi,   process.ZToEERho]
+if 'jpsiphi' in _channels: _builders += [process.HZToJpsiPhi]
 
 if options.wideWindow:   # diagnostic: the early V (di-track) window (vMassMin/Max) still bounds the
     # combinatorics in C++; here we drop the Z-mass + prompt cuts -> measure the realistic
@@ -101,6 +103,7 @@ import PhysicsTools.BPHNano.ZToLLV_cff as zllv
 _counts = []
 if 'mumu' in _channels: _counts += [('ZToMuMuPhi', zllv.CountZToMuMuPhi), ('ZToMuMuRho', zllv.CountZToMuMuRho)]
 if 'ee'   in _channels: _counts += [('ZToEEPhi',   zllv.CountZToEEPhi),   ('ZToEERho',   zllv.CountZToEERho)]
+if 'jpsiphi' in _channels: _counts += [('HZToJpsiPhi', zllv.CountHZToJpsiPhi)]
 _pre = (process.singleLepHLT + process.nanoSequence) if do_trig else process.nanoSequence
 
 if options.skim:
