@@ -1,0 +1,14 @@
+# CRAB project / work areas (runtime artifacts, never commit)
+production/UPS4L_*/
+production/ZLLV_*/
+production/crab_*/
+crab_projects/
+
+# logs / scratch
+production/crab.log
+production/*.err
+*.log
+
+# python bytecode
+*.pyc
+__pycache__/

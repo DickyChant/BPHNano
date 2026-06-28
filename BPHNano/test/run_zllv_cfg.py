@@ -22,6 +22,7 @@ options.register('trigger', '', VarParsing.multiplicity.singleton, VarParsing.va
 options.register('skim', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int, "1: keep events with >=1 (phi OR rho) candidate; 0: keep all")
 options.register('mode', 'mumu', VarParsing.multiplicity.singleton, VarParsing.varType.string, "lepton channel: 'mumu' (/Muon), 'ee' (/EGamma), or 'all'")
 options.register('wideWindow', 0, VarParsing.multiplicity.singleton, VarParsing.varType.int, "diagnostic: open V+Z windows, accept all fits")
+options.register('nThreads', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int, "cmsRun threads/streams (set = CRAB JobType.numCores)")
 options.setDefault('maxEvents', -1)
 options.parseArguments()
 
@@ -44,7 +45,11 @@ process.load('TrackingTools/TransientTrack/TransientTrackBuilder_cfi')
 process.MessageLogger.cerr.FwkReport.reportEvery = options.reportEvery
 process.maxEvents = cms.untracked.PSet(input=cms.untracked.int32(options.maxEvents))
 process.source = cms.Source("PoolSource", fileNames=cms.untracked.vstring(options.inputFiles))
-process.options = cms.untracked.PSet(wantSummary=cms.untracked.bool(options.wantSummary))
+process.options = cms.untracked.PSet(
+    wantSummary=cms.untracked.bool(options.wantSummary),
+    numberOfThreads=cms.untracked.uint32(options.nThreads),
+    numberOfStreams=cms.untracked.uint32(0),   # 0 -> = numberOfThreads
+)
 
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, gt, '')
