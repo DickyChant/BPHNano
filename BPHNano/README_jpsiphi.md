@@ -32,6 +32,18 @@ cmsRun PhysicsTools/BPHNano/test/run_zllv_cfg.py inputFiles=file:miniaod.root mo
 ```
 Datasets: BParking `ParkingDoubleMuonLowMass` (J/ψ→μμ trigger) or `/Muon*` (single/di-muon HLT).
 
+## ⚠ Reconstruction finding (300-evt H→J/ψφ MC, 2026-06-29)
+**The boosted φ→KK is unresolvable, so the H peak at 125 is mostly lost** (reco eff ≈3% vs 66% gen
+acc). Cause is physics, not the builder: **φ→KK Q-value = m_φ−2m_K = 32 MeV**, so a φ boosted to
+~63 GeV (from the 125 H) emits its two kaons at **ΔR≈0.006** — far below the CMS ~0.02 two-track
+limit (only 13% of φ→KK have ΔR>0.02). The real φ is reconstructed as ≤1 track; candidates pair the
+(resolvable, ΔR~0.135) J/ψ→μμ with a soft combinatorial KK → m(J/ψφ) piles at ~90, not 125.
+- Contrast Z→Vℓℓ (this same builder works there): the φ *recoils* against the ℓℓ and is **soft**
+  (~7 GeV) → kaons ΔR~0.04, resolvable → ~36% eff. Hard 2-body φ vs soft recoil φ = opposite fate.
+- ⇒ J/ψφ is doubly limited: B(H→J/ψφ)~1e-9 **and** an unreconstructable φ. The **reconstructable**
+  exclusive-H→VV cousin is **H→J/ψJ/ψ→4μ** (both Q-values large → μ ΔR~0.135 resolvable; reuses the
+  upsilon_4mu 4μ machinery). The builder/branch below are correct and kept for the record.
+
 ## Signal MC
 - **H→J/ψφ**: `test/HToJpsiPhi_13p6TeV_cfi.py` — **ggH built-in Pythia8** + `25:addChannel` forcing
   H→J/ψφ, J/ψ→μμ, φ→KK. **This works** (unlike the Z, where `addChannel` is ignored): GEN verified
