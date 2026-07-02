@@ -17,6 +17,9 @@ finalGenParticlesBPH = finalGenParticles.clone(
 
 genParticleBPHTable = genParticleTable.clone(
   src = cms.InputTag("finalGenParticlesBPH"),
+  # drop the inherited GenPart_iso external variable: the central `genIso` ValueMap is keyed
+  # to finalGenParticles, not finalGenParticlesBPH, so it is neither scheduled nor aligned here.
+  externalVariables = cms.PSet(),
   variables = cms.PSet(
       genParticleTable.variables,
       vx = Var("vx()", float, doc="x coordinate of the production vertex position, in cm"),

@@ -56,7 +56,9 @@ nanoSequence = cms.Sequence(nanoMetadata +
 
 def nanoAOD_customizeMC(process):
     #process.nanoSequence = cms.Sequence(process.nanoSequence + particleLevelBPHSequence + particleLevelBPHTables + genParticleBPHSequence + genParticleBPHTables )
-    process.nanoSequence = cms.Sequence(process.nanoSequence + particleLevelBPHSequence + particleLevelBPHTables + genParticleBPHSequence + genParticleBPHTables + cms.Sequence(ppuTable) )
+    # genWeightsTable produces the per-event `genWeight` (incl. NLO sign) -- was missing,
+    # so DY(amcatnlo)/signal MC could not be normalised. lheInfoTable already ran (LHE_* branches).
+    process.nanoSequence = cms.Sequence(process.nanoSequence + genWeightsTable + particleLevelBPHSequence + particleLevelBPHTables + genParticleBPHSequence + genParticleBPHTables + cms.Sequence(ppuTable) )
     return process
 
 def nanoAOD_customizeMuonBPH(process,isMC):
