@@ -121,7 +121,9 @@ def main():
                            'globalTag=%s' % gt, 'skim=%d' % (0 if args.noskim else 1),
                            'reportEvery=1000', 'maxEvents=%s' % args.maxevents,
                            'nThreads=%d' % args.numcores]
-            outfile = 'zllv_%s_%s.root' % (PROD_TAG, mode)
+            # NanoAOD (EDM) output is auto-detected by CRAB from the cfg's NanoAODOutputModule;
+            # do NOT declare it in JobType.outputFiles (that is for non-EDM/TFileService outputs,
+            # and declaring a name the job never writes fails stageout with "output file not found").
 
             if args.dry_run:
                 print('--- task %d: %s' % (n_tasks, req))
@@ -144,7 +146,6 @@ def main():
             c.JobType.numCores = args.numcores
             c.JobType.maxMemoryMB = args.maxmemory
             c.JobType.allowUndistributedCMSSW = True
-            c.JobType.outputFiles = [outfile]
             c.Data.inputDataset = ds
             c.Data.inputDBS = 'global'
             c.Data.splitting = 'FileBased'
