@@ -32,8 +32,10 @@ def parse_args():
     p.add_argument('-c', '--cmd', default='submit', choices=['submit', 'status'])
     p.add_argument('-f', '--filter', default='*', help='glob on sample name (e.g. data_Run2025*)')
     p.add_argument('-w', '--workarea', default='ZLLV_%s' % PROD_TAG)
-    p.add_argument('-o', '--outputdir', default='/store/user/%s' % os.environ.get('USER', 'CHANGEME'),
-                   help='output LFN base dir (CHANGE to your writable area)')
+    p.add_argument('-o', '--outputdir',
+                   default='/store/user/%s/zllv' % os.environ.get('CERNUSERNAME', os.environ.get('USER', 'CHANGEME')),
+                   help='output LFN base dir. Defaults to /store/user/$CERNUSERNAME/zllv (CRAB username, '
+                        'e.g. sqian; falls back to $USER) -- matches the existing data/DY output area.')
     p.add_argument('-s', '--site', default='T3_US_FNALLPC', help='storage site')
     p.add_argument('-p', '--psetcfg', default='../test/run_zllv_cfg.py')
     p.add_argument('-m', '--mode', default=None, choices=['mumu', 'ee', 'all'],
@@ -43,6 +45,9 @@ def parse_args():
     p.add_argument('--maxmemory', type=int, default=2500, help='per-job memory cap MB (raise for many cores)')
     p.add_argument('--unitsperjob', type=int, default=None, help='files per job; default = common.<type>.splitting from yaml')
     p.add_argument('--noskim', action='store_true', help='disable the >=1-candidate skim (default: skim on)')
+    p.add_argument('--ignore-locality', action='store_true',
+                   help='run anywhere + xrootd-read the input (needed for MC only on T1/tape, e.g. DY; '
+                        'avoids the "idle too long" 50665 kill from being pinned to slow/remote sites)')
     p.add_argument('-t', '--tag', default=PROD_TAG, help='campaign tag (in requestName + workArea); keep distinct from other live submissions')
     p.add_argument('--test', action='store_true', help='cap each task to 10 units')
     p.add_argument('--dry-run', action='store_true', help='print configs, do not submit (skips VERIFY check)')
@@ -157,6 +162,15 @@ def main():
             if args.test:
                 c.Data.totalUnits = 10
             c.Site.storageSite = args.site
+            if args.ignore_locality:
+                # input only on T1/tape (e.g. DY MC). Neither extreme works: US-only whitelist
+                # starves (0 matches/day), fully-open sends jobs to far sites that WAN-read the
+                # input and get killed idle (50665). Balance: whitelist well-connected T2s in the
+                # REGIONS that host a disk copy (FNAL-US, CNAF-IT, JINR-RU) -> many matching slots,
+                # each with a fast read from a nearby copy. (No T3_US_FNALLPC: that pool is saturated.)
+                c.Data.ignoreLocality = True
+                c.Site.whitelist = ['T2_US_*', 'T2_IT_*', 'T2_CH_*', 'T2_DE_*',
+                                    'T2_FR_*', 'T2_UK_*', 'T2_RU_*', 'T2_BE_*']
 
             print('Submitting %s' % req)
             # each submit in its own forked process: CRAB caches the imported pset in-process,

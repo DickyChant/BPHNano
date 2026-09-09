@@ -1,5 +1,6 @@
 // original author: RK18 team
 #include "KinVtxFitter.h"
+#include <memory>
 #include "RecoVertex/KinematicFitPrimitives/interface/KinematicParticleFactoryFromTransientTrack.h"
 #include "RecoVertex/KinematicFit/interface/KinematicParticleVertexFitter.h"
 #include "RecoVertex/KinematicFit/interface/KinematicConstrainedVertexFitter.h"
@@ -66,16 +67,20 @@ KinVtxFitter::KinVtxFitter(const std::vector<reco::TransientTrack> tracks,
       );
   }
 
-  MultiTrackKinematicConstraint *  dilep_const;
- 
-  if(tracks.size()==2){
-      MultiTrackKinematicConstraint * dilep_const = new TwoTrackMassKinematicConstraint(dilep_mass);
-  }else{
-      //dilep_const = new MultiTrackKinematicConstraint(dilep_mass);
-      KinematicConstraint * dilep_const = new MassKinematicConstraint(dilep_mass, 1e-6);
-  }
-  KinematicConstrainedVertexFitter kcv_fitter;    
-  RefCountedKinematicTree vtx_tree = kcv_fitter.fit(particles,dilep_const);
+  // BUGFIX: both branches used to re-DECLARE `dilep_const` inside the if/else, shadowing the
+  // outer pointer, which therefore stayed UNINITIALISED and was handed to fit() -> undefined
+  // behaviour. Also, KinematicConstrainedVertexFitter::fit() takes a MultiTrackKinematicConstraint,
+  // so the MassKinematicConstraint branch was the wrong type anyway.
+  //
+  // TwoTrackMassKinematicConstraint constrains the invariant mass of the FIRST TWO particles in
+  // `particles`. So the caller decides WHAT gets constrained purely by ordering: pass
+  // {trk1, trk2, lep1, lep2} to constrain a di-track (e.g. phi->KK), or {lep1, lep2, ...} to
+  // constrain the dilepton. Applies for any n>=2.
+  std::unique_ptr<MultiTrackKinematicConstraint> dilep_const(
+      new TwoTrackMassKinematicConstraint(dilep_mass));
+
+  KinematicConstrainedVertexFitter kcv_fitter;
+  RefCountedKinematicTree vtx_tree = kcv_fitter.fit(particles, dilep_const.get());
 
   if (vtx_tree->isEmpty() || !vtx_tree->isValid() || !vtx_tree->isConsistent()) {
     success_ = false; 

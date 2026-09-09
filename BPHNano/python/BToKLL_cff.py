@@ -10,7 +10,8 @@ BToKmumu = cms.EDProducer(
     dileptonKinVtxs = cms.InputTag('MuMu:SelectedDiLeptonKinVtxs'),
     kaons = cms.InputTag('tracksBPH', 'SelectedTracks'),
     kaonsTransientTracks = cms.InputTag('tracksBPH', 'SelectedTransientTracks'),
-    trackMass = cms.double(493.677),
+    trackMass = cms.double(0.493677),   # GeV -- was 493.677 (MeV); harmless while the
+                                        # parameter was unused, wrong now that it is live
     beamSpot = cms.InputTag("offlineBeamSpot"),
     PUtracks = cms.InputTag('tracksBPH', 'SelectedTracks'),
     preVtxSelection  = cms.string('pt > 5.0'

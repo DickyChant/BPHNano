@@ -63,6 +63,12 @@ def _zllv(dileptons, lep_ttracks, lep_mass, lep_sigma, trk_mass, trk_sigma, v_lo
         trkSigma = cms.double(trk_sigma),
         vMassMin = cms.double(v_lo),
         vMassMax = cms.double(v_hi),
+        # OFF by default -> the Z->llV analysis fit is unchanged. Set True (with
+        # vMassConstraint) to constrain m(trk,trk) to the V mass in the 4-track fit.
+        # 'none' | 'ditrack' (m(KK)->phi) | 'dilepton' (m(mumu)->J/psi).
+        # 'none' keeps the Z->llV fit exactly as it was.
+        massConstraint = cms.string('none'),
+        constraintMass = cms.double(0.5*(v_lo+v_hi)),
         trk1Selection = cms.string(_TRK_SEL),
         trk2Selection = cms.string(_TRK_SEL),
         preVtxSelection = cms.string('charge() == 0 && mass() > 60 && mass() < 120'),
@@ -96,6 +102,13 @@ def _zllv_table(src, name, doc):
             m_ditrack  = ufloat('m_ditrack'),
             ditrack_pt = ufloat('ditrack_pt'),   # pT(hh): energetic for a real Z->V, soft for combinatorial
             dilep_pt   = ufloat('dilep_pt'),
+            # raw track kinematics + alternative pair-mass hypotheses (the track table is dropped
+            # from the output; these let the offline analysis re-evaluate the pair, e.g. test
+            # whether it is a photon conversion: m_ditrack_ee ~ 0)
+            trk1_pt = ufloat('trk1_pt'), trk1_eta = ufloat('trk1_eta'), trk1_phi = ufloat('trk1_phi'),
+            trk2_pt = ufloat('trk2_pt'), trk2_eta = ufloat('trk2_eta'), trk2_phi = ufloat('trk2_phi'),
+            m_ditrack_ee   = ufloat('m_ditrack_ee'),
+            m_ditrack_mumu = ufloat('m_ditrack_mumu'),
             min_dr = ufloat('min_dr'), max_dr = ufloat('max_dr'),
             # vtx + prompt
             chi2 = ufloat('sv_chi2'), svprob = ufloat('sv_prob'),

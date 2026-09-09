@@ -109,7 +109,13 @@ void BToTrkLLBuilder::produce(edm::StreamID, edm::Event &evt, edm::EventSetup co
       k_ptr->pt(),
       k_ptr->eta(),
       k_ptr->phi(),
-      K_MASS
+      // Was hard-coded K_MASS here and in both KinVtxFitter calls below, while the
+      // configured `trackMass` was read into track_mass_ and never used -- so a pion
+      // bachelor was silently reconstructed as a kaon.  The error is not a small mass
+      // shift: Delta_m = gamma_parent * Delta_E_trk, so at pt(D) > 10 GeV a ~100 MeV
+      // energy difference becomes ~0.9 GeV of mass and the candidate leaves the mass
+      // window entirely.  Callers must pass trackMass in GeV.
+      track_mass_
     );
 
     for (size_t ll_idx = 0; ll_idx < dileptons->size(); ++ll_idx) {
@@ -144,7 +150,7 @@ void BToTrkLLBuilder::produce(edm::StreamID, edm::Event &evt, edm::EventSetup co
           { leptons_ttracks->at(l1_idx), leptons_ttracks->at(l2_idx),
             kaons_ttracks->at(k_idx)
           },
-          {l1_ptr->mass(), l2_ptr->mass(), K_MASS},
+          {l1_ptr->mass(), l2_ptr->mass(), track_mass_},
           {LEP_SIGMA, LEP_SIGMA, K_SIGMA} //some small sigma for the lepton mass
           );
 
@@ -228,7 +234,7 @@ void BToTrkLLBuilder::produce(edm::StreamID, edm::Event &evt, edm::EventSetup co
         { leptons_ttracks->at(l1_idx), leptons_ttracks->at(l2_idx),
           kaons_ttracks->at(k_idx)
         },
-        {l1_ptr->mass(), l2_ptr->mass(), K_MASS},
+        {l1_ptr->mass(), l2_ptr->mass(), track_mass_},
         {LEP_SIGMA, LEP_SIGMA, K_SIGMA},
         dilep_mass);
         if (constraint_fitter.success()) {

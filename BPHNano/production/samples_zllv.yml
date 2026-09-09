@@ -74,3 +74,71 @@ samples:
     globaltag: 150X_mcRun3_2024_realistic_v2
     datasets:
       - /DYto2Mu-2Jets_Bin-MLL-50_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/RunIII2024Summer24MiniAODv6-150X_mcRun3_2024_realistic_v2-v6/MINIAODSIM
+
+  # second DY generator (madgraphMLM) -> independent background shape for the spurious-signal
+  # / background-model systematic (cross-check vs the amcatnloFXFX sample above).
+  mc_DYto2Mu_Summer24_MLM:
+    isMC: True
+    mode: 'mumu'
+    trigger: 'HLT_IsoMu24_v* HLT_Mu50_v*'
+    globaltag: 150X_mcRun3_2024_realistic_v2
+    datasets:
+      - /DYto2Mu-4Jets_Bin-MLL-50_TuneCP5_13p6TeV_madgraphMLM-pythia8/RunIII2024Summer24MiniAODv6-150X_mcRun3_2024_realistic_v2-v3/MINIAODSIM
+  # --- 2022-2023 extension (22Sep2023 reReco; 2022 = single /Muon, 2023 = /Muon0+/Muon1) ---
+  data_Muon_2022:
+    isMC: False
+    mode: 'mumu'
+    trigger: 'HLT_IsoMu24_v* HLT_Mu50_v*'
+    globaltag: 150X_dataRun3_v2
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions22/Cert_Collisions2022_355100_362760_Golden.json
+    datasets:
+      - /Muon/Run2022C-22Sep2023-v1/MINIAOD
+      - /Muon/Run2022D-22Sep2023-v1/MINIAOD
+      - /Muon/Run2022E-22Sep2023-v1/MINIAOD
+      - /Muon/Run2022F-22Sep2023-v2/MINIAOD
+      - /Muon/Run2022G-22Sep2023-v1/MINIAOD
+  data_Muon0_2023:
+    isMC: False
+    mode: 'mumu'
+    trigger: 'HLT_IsoMu24_v* HLT_Mu50_v*'
+    globaltag: 150X_dataRun3_v2
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions23/Cert_Collisions2023_366442_370790_Golden.json
+    datasets:
+      - /Muon0/Run2023B-22Sep2023-v1/MINIAOD
+      - /Muon0/Run2023C-22Sep2023_v1-v1/MINIAOD
+      - /Muon0/Run2023C-22Sep2023_v2-v1/MINIAOD
+      - /Muon0/Run2023C-22Sep2023_v3-v1/MINIAOD
+      - /Muon0/Run2023C-22Sep2023_v4-v1/MINIAOD
+      - /Muon0/Run2023D-22Sep2023_v1-v1/MINIAOD
+      - /Muon0/Run2023D-22Sep2023_v2-v1/MINIAOD
+  data_Muon1_2023:
+    isMC: False
+    mode: 'mumu'
+    trigger: 'HLT_IsoMu24_v* HLT_Mu50_v*'
+    globaltag: 150X_dataRun3_v2
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions23/Cert_Collisions2023_366442_370790_Golden.json
+    datasets:
+      - /Muon1/Run2023B-22Sep2023-v1/MINIAOD
+      - /Muon1/Run2023C-22Sep2023_v1-v1/MINIAOD
+      - /Muon1/Run2023C-22Sep2023_v2-v1/MINIAOD
+      - /Muon1/Run2023C-22Sep2023_v3-v1/MINIAOD
+      - /Muon1/Run2023C-22Sep2023_v4-v2/MINIAOD
+      - /Muon1/Run2023D-22Sep2023_v1-v1/MINIAOD
+      - /Muon1/Run2023D-22Sep2023_v2-v1/MINIAOD
+  # --- low-mass DY (MLL 10-50). The MLL-50 samples only cover m(mumu)>50, but the analysis
+  # selection m(mumu) in (15,80) is dominated by 10<m(mumu)<50 -> these are required for any
+  # meaningful background model / spurious-signal test. Same campaign + GT as the MLL-50 sets.
+  mc_DYto2Mu_lowmass_Summer24:
+    isMC: True
+    mode: 'mumu'
+    trigger: 'HLT_IsoMu24_v* HLT_Mu50_v*'
+    globaltag: 150X_mcRun3_2024_realistic_v2
+    datasets:
+      - /DYto2Mu-2Jets_Bin-MLL-10to50_TuneCP5_13p6TeV_amcatnloFXFX-pythia8/RunIII2024Summer24MiniAODv6-150X_mcRun3_2024_realistic_v2-v2/MINIAODSIM
+  mc_DYto2Mu_lowmass_Summer24_MLM:
+    isMC: True
+    mode: 'mumu'
+    trigger: 'HLT_IsoMu24_v* HLT_Mu50_v*'
+    globaltag: 150X_mcRun3_2024_realistic_v2
+    datasets:
+      - /DYto2Mu-4Jets_Bin-MLL-10to50_TuneCP5_13p6TeV_madgraphMLM-pythia8/RunIII2024Summer24MiniAODv6-150X_mcRun3_2024_realistic_v2-v2/MINIAODSIM

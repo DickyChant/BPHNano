@@ -46,6 +46,8 @@ public:
     lep_sigma_{cfg.getParameter<double>("lepSigma")},
     trk_mass_{cfg.getParameter<double>("trkMass")},
     trk_sigma_{cfg.getParameter<double>("trkSigma")},
+    mass_constraint_{cfg.getParameter<std::string>("massConstraint")},
+    constraint_mass_{cfg.getParameter<double>("constraintMass")},
     v_mass_min_{cfg.getParameter<double>("vMassMin")},
     v_mass_max_{cfg.getParameter<double>("vMassMax")},
     // selections
@@ -78,6 +80,11 @@ private:
   const double lep_sigma_;
   const double trk_mass_;
   const double trk_sigma_;
+  // "none" | "ditrack" (constrain m(KK)->phi) | "dilepton" (constrain m(mumu)->J/psi).
+  // TwoTrackMassKinematicConstraint always constrains the FIRST TWO particles, so the
+  // mode simply decides the ordering handed to the fitter.
+  const std::string mass_constraint_;
+  const double      constraint_mass_;
   const double v_mass_min_;   // di-track (V) mass window, applied EARLY (before cand build)
   const double v_mass_max_;
 
@@ -172,17 +179,50 @@ void ZToLLVBuilder::produce(edm::StreamID, edm::Event &evt, edm::EventSetup cons
         cand.addUserFloat("ditrack_pt", ditrack_p4.pt());    // pT(hh): a Z->V gives an energetic V
         cand.addUserFloat("dilep_pt",   dilep_p4.pt());
 
+        // Raw track kinematics + alternative mass hypotheses for the SAME pair. The general
+        // track table is dropped from the output, so without these the offline analysis
+        // cannot re-evaluate the pair. Diagnostic for the phi-independent 91 GeV structure:
+        // a photon conversion (gamma->ee) or a Z->4l pair collapses to m_ee ~ 0 / m_mumu ~ 0
+        // under the right hypothesis, while a genuine hadron pair does not.
+        cand.addUserFloat("trk1_pt",  trk1_ptr->pt());
+        cand.addUserFloat("trk1_eta", trk1_ptr->eta());
+        cand.addUserFloat("trk1_phi", trk1_ptr->phi());
+        cand.addUserFloat("trk2_pt",  trk2_ptr->pt());
+        cand.addUserFloat("trk2_eta", trk2_ptr->eta());
+        cand.addUserFloat("trk2_phi", trk2_ptr->phi());
+        {
+          math::PtEtaPhiMLorentzVector t1e(trk1_ptr->pt(), trk1_ptr->eta(), trk1_ptr->phi(), ELECTRON_MASS);
+          math::PtEtaPhiMLorentzVector t2e(trk2_ptr->pt(), trk2_ptr->eta(), trk2_ptr->phi(), ELECTRON_MASS);
+          math::PtEtaPhiMLorentzVector t1m(trk1_ptr->pt(), trk1_ptr->eta(), trk1_ptr->phi(), MUON_MASS);
+          math::PtEtaPhiMLorentzVector t2m(trk2_ptr->pt(), trk2_ptr->eta(), trk2_ptr->phi(), MUON_MASS);
+          cand.addUserFloat("m_ditrack_ee",   (t1e + t2e).mass());
+          cand.addUserFloat("m_ditrack_mumu", (t1m + t2m).mass());
+        }
+
         auto dr_info = min_max_dr({l1_ptr, l2_ptr, trk1_ptr, trk2_ptr});
         cand.addUserFloat("min_dr", dr_info.first);
         cand.addUserFloat("max_dr", dr_info.second);
 
         if ( !pre_vtx_selection_(cand) ) continue;
 
-        KinVtxFitter fitter(
-          { leptons_ttracks->at(l1_idx), leptons_ttracks->at(l2_idx), ttracks->at(trk1_idx), ttracks->at(trk2_idx) },
-          { lep_mass_, lep_mass_, trk_mass_, trk_mass_ },
-          { (float)lep_sigma_, (float)lep_sigma_, (float)trk_sigma_, (float)trk_sigma_ }
-          );
+        // TwoTrackMassKinematicConstraint constrains the FIRST TWO particles, so when the
+        // di-track (phi->KK) is to be constrained the TRACKS must be passed first. Ordering is
+        // the only thing that selects what gets constrained.
+        const std::vector<reco::TransientTrack> tt_lep_first =
+            { leptons_ttracks->at(l1_idx), leptons_ttracks->at(l2_idx), ttracks->at(trk1_idx), ttracks->at(trk2_idx) };
+        const std::vector<double>  m_lep_first = { lep_mass_, lep_mass_, trk_mass_, trk_mass_ };
+        const std::vector<float>   s_lep_first = { (float)lep_sigma_, (float)lep_sigma_, (float)trk_sigma_, (float)trk_sigma_ };
+        const std::vector<reco::TransientTrack> tt_trk_first =
+            { ttracks->at(trk1_idx), ttracks->at(trk2_idx), leptons_ttracks->at(l1_idx), leptons_ttracks->at(l2_idx) };
+        const std::vector<double>  m_trk_first = { trk_mass_, trk_mass_, lep_mass_, lep_mass_ };
+        const std::vector<float>   s_trk_first = { (float)trk_sigma_, (float)trk_sigma_, (float)lep_sigma_, (float)lep_sigma_ };
+
+        KinVtxFitter fitter =
+            (mass_constraint_ == "ditrack")
+              ? KinVtxFitter(tt_trk_first, m_trk_first, s_trk_first, (ParticleMass) constraint_mass_)
+          : (mass_constraint_ == "dilepton")
+              ? KinVtxFitter(tt_lep_first, m_lep_first, s_lep_first, (ParticleMass) constraint_mass_)
+              : KinVtxFitter(tt_lep_first, m_lep_first, s_lep_first);
 
         if (!fitter.success()) continue;
 

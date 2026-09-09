@@ -12,10 +12,17 @@ Run with cmsenv + proxy:  python3 gen_samples_zllv.py > samples_zllv.yml
 import subprocess
 
 CERT = "https://cms-service-dqmdc.web.cern.ch/CAF/certification"
+GOLDEN_2022 = CERT + "/Collisions22/Cert_Collisions2022_355100_362760_Golden.json"
+GOLDEN_2023 = CERT + "/Collisions23/Cert_Collisions2023_366442_370790_Golden.json"
 GOLDEN_2024 = CERT + "/Collisions24/Cert_Collisions2024_378981_386951_Golden.json"
 GOLDEN_2025 = CERT + "/Collisions25/Cert_Collisions2025_391658_398903_Golden.json"
 GT_2024 = "150X_dataRun3_v2"          # PPD v15 (MINIv6NANOv15)
 GT_2025 = "150X_dataRun3_Prompt_v1"   # PPD prompt
+# 2022/2023: 22Sep2023 reReco. NanoAOD is re-produced in 15_0_15, and 150X_dataRun3_v2 spans all
+# Run3 data IOVs (2022-2024), so it supplies the right geometry/B-field/alignment for the vertex
+# fits on 22/23 runs too. VALIDATE on 1 file before mass submit. 2022 PD = /Muon (not yet split);
+# 2023 PD = /Muon0,/Muon1 (split). Golden JSONs are the full-year Run3 certifications.
+GT_RERECO_22_23 = "150X_dataRun3_v2"
 
 TRIG = {"mumu": "HLT_IsoMu24_v* HLT_Mu50_v*", "ee": "HLT_Ele30_WPTight_Gsf_v*"}
 
@@ -35,6 +42,14 @@ SAMPLES = {
     "data_EGamma0_2025": ("EGamma0", "ee",
         ["Run2025B-PromptReco", "Run2025C-PromptReco", "Run2025D-PromptReco",
          "Run2025E-PromptReco", "Run2025F-PromptReco", "Run2025G-PromptReco"], GT_2025, GOLDEN_2025),
+    # --- 2022-2023 extension (22Sep2023 reReco). 2022 = single /Muon PD; 2023 = /Muon0 + /Muon1. ---
+    "data_Muon_2022":    ("Muon",    "mumu",
+        ["Run2022C-22Sep2023", "Run2022D-22Sep2023", "Run2022E-22Sep2023",
+         "Run2022F-22Sep2023", "Run2022G-22Sep2023"], GT_RERECO_22_23, GOLDEN_2022),
+    "data_Muon0_2023":   ("Muon0",   "mumu",
+        ["Run2023B-22Sep2023", "Run2023C-22Sep2023", "Run2023D-22Sep2023"], GT_RERECO_22_23, GOLDEN_2023),
+    "data_Muon1_2023":   ("Muon1",   "mumu",
+        ["Run2023B-22Sep2023", "Run2023C-22Sep2023", "Run2023D-22Sep2023"], GT_RERECO_22_23, GOLDEN_2023),
 }
 
 
