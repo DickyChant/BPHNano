@@ -23,3 +23,5 @@ __init__.py
 *.sw*
 .__afs*
 production/mc/crab*
+# PhysicsTools/NanoAOD comes from `git cms-addpkg`, not from this repo -- never commit it
+NanoAOD/

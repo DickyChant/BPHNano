@@ -11,6 +11,8 @@ options.register('reportEvery', 100, VarParsing.multiplicity.singleton, VarParsi
 options.register('outputFiles', 'upsilon4l_nano.root', VarParsing.multiplicity.singleton, VarParsing.varType.string, "output NanoAOD file")
 options.register('mode', '4mu', VarParsing.multiplicity.singleton, VarParsing.varType.string, "channels: '4mu' (4mu only) or '4l' (4mu + 2mu2e; 2mu2e still uses general tracks - WIP)")
 options.register('wideWindow', 0, VarParsing.multiplicity.singleton, VarParsing.varType.int, "diagnostic: wideWindow=1 opens the 4mu mass window (0.5-60) to check the builder emits candidates")
+options.register('skim', False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "keep only events with >=1 Upsilon candidate (4mu, or 4mu||2mu2e in 4l mode)")
+options.register('nThreads', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int, "cmsRun threads/streams (set = CRAB JobType.numCores)")
 options.setDefault('maxEvents', -1)
 options.parseArguments()
 
@@ -35,7 +37,11 @@ process.load('TrackingTools/TransientTrack/TransientTrackBuilder_cfi')
 process.MessageLogger.cerr.FwkReport.reportEvery = options.reportEvery
 process.maxEvents = cms.untracked.PSet(input=cms.untracked.int32(options.maxEvents))
 process.source = cms.Source("PoolSource", fileNames=cms.untracked.vstring(options.inputFiles))
-process.options = cms.untracked.PSet(wantSummary=cms.untracked.bool(options.wantSummary))
+process.options = cms.untracked.PSet(
+    wantSummary=cms.untracked.bool(options.wantSummary),
+    numberOfThreads=cms.untracked.uint32(options.nThreads),
+    numberOfStreams=cms.untracked.uint32(0),   # 0 -> = numberOfThreads
+)
 
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, gt, '')
@@ -69,9 +75,25 @@ if options.wideWindow:   # diagnostic only: open the mass window AND accept ever
     process.UpsilonTo4Mu.preVtxSelection  = cms.string('charge() == 0 && pt > 2. && mass > 0.5 && mass < 60.')
     process.UpsilonTo4Mu.postVtxSelection = cms.string('')   # fit (no sv_prob/l_xy cut) to study the full candidate spectrum
 
-process.nanoAOD_step = cms.Path(process.nanoSequence)
+# ---- optional skim: keep only events with >=1 Upsilon candidate (OR across channels) ----
 process.NANOAODoutput_step = cms.EndPath(process.NANOAODoutput)
-process.schedule = cms.Schedule(process.nanoAOD_step, process.NANOAODoutput_step)
+if options.skim:
+    process.countUps4Mu = cms.EDFilter("CandViewCountFilter",
+        src=cms.InputTag("UpsilonTo4Mu", "Selected4Leptons"), minNumber=cms.uint32(1))
+    process.nanoAOD_step = cms.Path(process.nanoSequence + process.countUps4Mu)
+    steps = [process.nanoAOD_step]
+    sel = ['nanoAOD_step']
+    if options.mode != '4mu':   # 4l: also keep events with a 2mu2e candidate
+        process.countUps2Mu2E = cms.EDFilter("CandViewCountFilter",
+            src=cms.InputTag("UpsilonTo2Mu2E"), minNumber=cms.uint32(1))
+        process.nanoAOD_step_2mu2e = cms.Path(process.nanoSequence + process.countUps2Mu2E)
+        steps.append(process.nanoAOD_step_2mu2e)
+        sel.append('nanoAOD_step_2mu2e')
+    process.NANOAODoutput.SelectEvents = cms.untracked.PSet(SelectEvents=cms.vstring(*sel))
+    process.schedule = cms.Schedule(*(steps + [process.NANOAODoutput_step]))
+else:
+    process.nanoAOD_step = cms.Path(process.nanoSequence)
+    process.schedule = cms.Schedule(process.nanoAOD_step, process.NANOAODoutput_step)
 
 from PhysicsTools.PatAlgos.tools.helpers import associatePatAlgosToolsTask
 associatePatAlgosToolsTask(process)

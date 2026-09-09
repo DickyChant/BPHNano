@@ -12,3 +12,12 @@ production/*.err
 # python bytecode
 *.pyc
 __pycache__/
+
+# CRAB work areas for the later campaigns (same rationale as above: runtime artifacts,
+# each holds a ~31 MB input sandbox plus per-task logs -- 152 of these were untracked)
+production/ETAP_*/
+production/ETAC_*/
+production/MMPHI_*/
+production/DPIMM_*/
+production/D0KSMM_*/
+production/BSJPSI_*/
