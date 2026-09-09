@@ -19,12 +19,15 @@ from PhysicsTools.BPHNano.globalsBPH_cff import *
 from PhysicsTools.BPHNano.muons_cff import *
 from PhysicsTools.BPHNano.photons_cff import *
 from PhysicsTools.BPHNano.MuMu_cff import *
+from PhysicsTools.BPHNano.BcToDsMuMu_cff import *
 from PhysicsTools.BPHNano.tracks_cff import *
 from PhysicsTools.BPHNano.KstarToKPi_cff import *
 from PhysicsTools.BPHNano.KshortToPiPi_cff import *
 from PhysicsTools.BPHNano.BToKLL_cff import *
 from PhysicsTools.BPHNano.BToKstarLL_cff import *
 from PhysicsTools.BPHNano.BToKshortLL_cff import *
+from PhysicsTools.BPHNano.D0ToKshortMuMu_cff import *
+from PhysicsTools.BPHNano.DToPiMuMu_cff import *
 #from PhysicsTools.BPHNano.BDh_cff_v3 import *
 
 from PhysicsTools.BPHNano.LambdaToPPi_cff import *
@@ -37,7 +40,11 @@ from PhysicsTools.BPHNano.EtaTo2L2PiGamma_cff import *
 from PhysicsTools.BPHNano.BToMuMuGammaConv_cff import *
 from PhysicsTools.BPHNano.UpsilonTo4Mu_cff import *
 from PhysicsTools.BPHNano.UpsilonTo2Mu2E_cff import *
-from PhysicsTools.BPHNano.lowPtEleTracks_cff import *   # LowPtElectron e-legs for 2mu2e
+from PhysicsTools.BPHNano.EtaPrimeTo2Mu2E_cff import *
+from PhysicsTools.BPHNano.EtaCTo4Mu_cff import *
+from PhysicsTools.BPHNano.MuMuPhi_cff import *
+from PhysicsTools.BPHNano.lowPtEleTracks_cff import *
+from PhysicsTools.BPHNano.EtaPrimeToMuMuGamma_cff import *   # mu mu + converted photon   # LowPtElectron e-legs for 2mu2e
 from PhysicsTools.BPHNano.ZToLLV_cff import *            # Z -> ll V (V=phi->KK / rho->pipi)
 from PhysicsTools.BPHNano.LambdabToLambdahhBuilder import *
 from PhysicsTools.BPHNano.BDKstar_cff import *
@@ -214,6 +221,117 @@ def nanoAOD_customizeBToXLL(process,isMC):
     return process
 
 
+def nanoAOD_customizeMuMuPhi(process, isMC):
+    """mu+mu- phi(->K+K-), m(mumuKK) 2.8-5.6 GeV.
+
+    Spans eta_c -> mumu.phi (rare target) AND B_s -> J/psi phi (abundant control), so the
+    B_s peak calibrates the mu-mu-K-K efficiency. Needs muonBPH + tracksBPH (the K legs);
+    the narrow phi di-track window is applied inside the builder BEFORE the 4-track fit,
+    which is what keeps the combinatorics affordable.
+    """
+    if isMC:
+        process.nanoSequence = cms.Sequence(process.nanoSequence
+            + muonBPHSequenceMC + muonBPHTablesMC + tracksBPHSequence
+            + MuMuPhiSequence + MuMuPhiTables)
+    else:
+        process.nanoSequence = cms.Sequence(process.nanoSequence
+            + muonBPHSequence + muonBPHTables + tracksBPHSequence
+            + MuMuPhiSequence + MuMuPhiTables)
+    pVertexTable.slim = cms.bool(True)
+    return process
+
+
+def nanoAOD_customizeEtaC4Mu(process, isMC):
+    """eta_c -> 4mu : charmonium-region (2.80-3.90 GeV) 4-muon scan.
+
+    Deliberately spans eta_c(1S) 2.984 up through psi(2S) 3.686, so J/psi (3.097) sits in the
+    same spectrum as a normalisation/validation peak. Only needs muonBPH -- the 4mu builder
+    takes muons directly, no dilepton collection required.
+    """
+    if isMC:
+        process.nanoSequence = cms.Sequence(process.nanoSequence
+            + muonBPHSequenceMC + muonBPHTablesMC
+            + EtaCTo4MuMCSequence + EtaCTo4MuMCTables)
+    else:
+        process.nanoSequence = cms.Sequence(process.nanoSequence
+            + muonBPHSequence + muonBPHTables
+            + EtaCTo4MuSequence + EtaCTo4MuTables)
+    pVertexTable.slim = cms.bool(True)
+    return process
+
+
+def nanoAOD_customizeEtaPrime2Mu2E(process, isMC, variant='both'):
+    """eta(548)/eta'(958) -> mu+mu- e+e-, with up to THREE e-leg variants on the same events.
+
+    variant:
+      'lowpt' : e-legs from LowPtElectron (~1-5 GeV)              -> EtaPrimeTo2Mu2ELowPt
+      'ele'   : e-legs from LowPtElectron AND standard Electron in ONE fit, with
+                trk{1,2}_src giving the three categories (both soft / mixed / both
+                standard)                                     -> EtaPrimeTo2Mu2EEle
+      'all'   : ele + lowpt
+
+    The e-leg sources are reconstructed on the SAME events so they can be compared directly.
+    LowPtElectron and Electron are complementary in pT (roughly 1-5 and >5 GeV); the 'ele'
+    variant merges them before the fit (duplicates removed by gsfTrack) so that the MIXED
+    pairing exists at all, which two separate builds could never produce.
+
+    The generic-track e-leg variant has been removed, so tracksBPH (a TrackMerger over every
+    packedPFCandidate + lostTrack) is no longer scheduled here at all -- it was the expensive
+    part and the only consumer is gone.
+    """
+    _need_lowpt = variant in ('lowpt', 'all')
+    _need_ele   = variant in ('ele', 'all')
+    # the mu mu gamma normalisation channel: cheap (photons are pre-made in the
+    # MiniAOD) so it rides along with 'ele' and 'all' by default
+    _need_gamma = variant in ('ele', 'all', 'gamma')
+    if not (_need_lowpt or _need_ele or _need_gamma):
+        raise ValueError("nanoAOD_customizeEtaPrime2Mu2E: unknown variant %r" % variant)
+
+    # tracksBPH (TrackMerger over every packedPFCandidate+lostTrack) is EXPENSIVE and is only
+    # needed by the generic-track variant -> only schedule it when that variant is requested.
+    seq = cms.Sequence(EtaPrimeMuMu)
+    tab = cms.Sequence()
+    if _need_lowpt:
+        seq += EtaPrimeTo2Mu2ELowPt
+        tab += EtaPrimeTo2Mu2ELowPtTable
+    if _need_ele:
+        seq += EtaPrimeTo2Mu2EEle
+        tab += EtaPrimeTo2Mu2EEleTable
+    if _need_gamma:
+        seq += EtaPrimeToMuMuGamma
+        tab += EtaPrimeToMuMuGammaTable
+
+    process.nanoSequence = cms.Sequence(process.nanoSequence
+        + (muonBPHSequenceMC + muonBPHTablesMC if isMC else muonBPHSequence + muonBPHTables)
+        + ((lowPtEleTracksSequenceMC if isMC else lowPtEleTracksSequence)
+           if _need_lowpt else cms.Sequence())
+        + ((etapEleTracksSequenceMC if isMC else etapEleTracksSequence)
+           if _need_ele else cms.Sequence())
+        + seq + tab)
+
+    if isMC:
+        if _need_lowpt:
+            process.nanoSequence += cms.Sequence(EtaPrimeTo2Mu2ELowPtBPHMCMatch
+                                                 + EtaPrimeTo2Mu2ELowPtBPHMCTable)
+        if _need_ele:
+            process.nanoSequence += cms.Sequence(EtaPrimeTo2Mu2EEleBPHMCMatch
+                                                 + EtaPrimeTo2Mu2EEleBPHMCTable)
+
+    # finalLowPtElectrons / finalElectrons and their tables live in cms.Tasks -> associate them
+    # so the framework runs them for a scheduled consumer (same reason as customizeUpsilon4L).
+    if _need_lowpt:
+        lowPtElectronTable.src = cms.InputTag("finalLowPtElectrons")
+        process.nanoSequence.associate(lowPtElectronTask, lowPtElectronTablesTask)
+    if _need_ele:
+        # only the LowPtElectron table is scheduled: the standard legs come from
+        # slimmedElectrons (MiniAOD) and carry their own stamped quality variables, so the
+        # heavy central Electron table (and its jet dependency) is not needed.
+        lowPtElectronTable.src = cms.InputTag("finalLowPtElectrons")
+        process.nanoSequence.associate(lowPtElectronTask, lowPtElectronTablesTask)
+    pVertexTable.slim = cms.bool(True)
+    return process
+
+
 def nanoAOD_customizeUpsilon4Mu(process, isMC):
     """Slim Upsilon -> 4mu ONLY NanoAOD (no 2mu2e, no general-track table).
 
@@ -309,3 +427,112 @@ def nanoAOD_customizeZLLV(process, isMC, channels=('mumu', 'ee')):
     return process
 
 
+
+
+def nanoAOD_customizeD0ToKshortMuMu(process, isMC):
+    """D0 -> K_S(pi pi) mu mu, for eta'(958) -> mu+mu-.
+
+    eta' -> mumu is unobserved; the D0 mass peak is the tag that would establish it.
+    The dimuon window is wide (0.40-1.15 GeV) so the same sample carries its own
+    normalisations: eta(548) -> mumu is the physics normalisation (same pseudoscalar
+    two-photon mechanism as the eta', so the ratio cancels theory and muon-efficiency
+    systematics) and phi(1020) -> mumu the experimental calibration (~45x more
+    abundant, only 62 MeV from the eta').  omega(783) is a further cross-check.
+
+    The K_S is displaced (c*tau = 2.68 cm) and is handled by V0ReBuilder, which fits
+    the two pions at their OWN vertex and hands BToV0LLBuilder the fitted composite
+    transient track -- no pion is forced into the D0 vertex.  There is no K_S mass
+    constraint in that fit, so recover the resolution offline by mass subtraction:
+    m_corr(D0) = m(mumu pipi) - m(pipi) + m_KS(PDG), using the stored mkshort_fullfit.
+
+    tracksBPH runs as a producer because V0ReBuilder's track_match needs it.
+    """
+    if isMC:
+        process.nanoSequence = cms.Sequence(process.nanoSequence
+            + muonBPHSequenceMC + muonBPHTablesMC
+            + tracksBPHSequence
+            + KshortToPiPiSequenceMC + KshortToPiPiTablesMC
+            + D0MuMuSequence + D0MuMuTables
+            + D0ToKshortMuMuSequence + D0ToKshortMuMuTables)
+    else:
+        process.nanoSequence = cms.Sequence(process.nanoSequence
+            + muonBPHSequence + muonBPHTables
+            + tracksBPHSequence
+            + KshortToPiPiSequence + KshortToPiPiTables
+            + D0MuMuSequence + D0MuMuTables
+            + D0ToKshortMuMuSequence + D0ToKshortMuMuTables)
+    # NB: the Count* EDFilters are deliberately NOT in the sequence.  Inside it they
+    # stop the path for candidate-less events, so with skim=0 the output module still
+    # wants every event but the tables were never produced -> ProductNotFound.  The
+    # pset adds the filter as its own skim path when skim=1.
+    pVertexTable.slim = cms.bool(True)
+    return process
+
+
+def nanoAOD_customizeDToPiMuMu(process, isMC):
+    """D+/Ds+ -> pi+ mu+ mu-, reproducing the CMS eta'/eta -> mumu charm analysis.
+
+    One mass window (1.78-2.06) holds both parents, D+ at 1869.66 and Ds+ at 1968.35.
+    m(mumu) is left free -- it is the search variable and spans eta/omega/eta'/phi.
+
+    Muon selection is deliberately LOOSE in the producer so that tight / medium / soft
+    can be compared offline on one ntuple.  That comparison is the point: the note this
+    reproduces applies Tight muon ID, whose |dxy| < 0.2 cm and |dz| < 0.5 cm are
+    prompt-muon cuts imposed on a displaced charm decay, and in a ~41-pileup sample the
+    dz requirement is partly a PV-association cut.  Since the dominant background is
+    genuine D -> pi mu mu Dalitz physics with real muons, muon ID scales signal and
+    background alike, so S/sqrt(B) goes as sqrt(eps) -- loosening tight to soft is
+    predicted to gain ~25%, which this build lets us measure.
+
+    tracksBPH is required as a producer: the bachelor pion comes from SelectedTracks.
+    """
+    if isMC:
+        process.nanoSequence = cms.Sequence(process.nanoSequence
+            + muonBPHSequenceMC + muonBPHTablesMC
+            + tracksBPHSequence
+            + DPiMuMuSequence
+            + DToPiMuMuSequence + DToPiMuMuTables)
+    else:
+        process.nanoSequence = cms.Sequence(process.nanoSequence
+            + muonBPHSequence + muonBPHTables
+            + tracksBPHSequence
+            + DPiMuMuSequence
+            + DToPiMuMuSequence + DToPiMuMuTables)
+    # Count* filters stay OUT of the sequence -- inside it they stop the path for
+    # candidate-less events, so with skim=0 the output module still wants every event
+    # while the tables were never produced (ProductNotFound).
+    pVertexTable.slim = cms.bool(True)
+    return process
+
+
+def nanoAOD_customizeBcToDsMuMu(process, isMC):
+    """Bc+ -> (mu mu) Ds+, Ds+ -> phi(K+K-) pi+.
+
+    One build carries three modes because m(mumu) is unconstrained over 2.0-4.4 GeV:
+    J/psi Ds+ (3.0969), psi(2S) Ds+ (3.6861) and the non-resonant mu mu Ds+ continuum
+    up to the m(Bc)-m(Ds) = 4.307 kinematic limit.  The two resonant modes normalise
+    the non-resonant search, and J/psi Ds+ -- which has a measured branching fraction --
+    gives the Bc yield in our own data, turning the Bc+ -> J/psi Lambda~ p event-count
+    limit into a branching-fraction ratio.
+
+    Ds*+ is NOT targeted: Ds*+ -> Ds+ gamma with the photon lost would sit near 6131
+    MeV, and the Bc window starts at 6.15 to exclude it.
+
+    Five tracks (mu mu K K pi) go into one vertex.  The phi arrives as a DiTrack with
+    both tracks at the kaon mass; the bachelor pion comes from tracksBPH with an
+    explicit index check against the two kaons, without which the same track would be
+    used twice and fabricate a Ds.
+    """
+    if isMC:
+        process.nanoSequence = cms.Sequence(process.nanoSequence
+            + muonBPHSequenceMC + muonBPHTablesMC
+            + tracksBPHSequence
+            + BcToDsMuMuSequence + BcToDsMuMuTables)
+    else:
+        process.nanoSequence = cms.Sequence(process.nanoSequence
+            + muonBPHSequence + muonBPHTables
+            + tracksBPHSequence
+            + BcToDsMuMuSequence + BcToDsMuMuTables)
+    # Count* filter stays OUT of the sequence -- see the note in the D0 customiser.
+    pVertexTable.slim = cms.bool(True)
+    return process

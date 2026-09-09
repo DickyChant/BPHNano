@@ -11,6 +11,7 @@
 <use   name="CommonTools/CandAlgos"/>
 <use   name="CommonTools/Statistics"/>
 <use   name="RecoEgamma/EgammaTools"/>
+<use   name="CommonTools/Egamma"/>
 <use   name="PhysicsTools/JetMCUtils"/>
 <use   name="DataFormats/NanoAOD"/>
 <use   name="HLTrigger/HLTcore"/>

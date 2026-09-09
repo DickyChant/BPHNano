@@ -1,0 +1,13 @@
+common:
+  data:
+    splitting: 50
+  mc:
+    splitting: 1
+samples:
+  data_Run2024H:
+    isMC: false
+    mode: lowpt
+    globaltag: 150X_dataRun3_v2
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions24/Cert_Collisions2024_378981_386951_Golden.json
+    datasets:
+    - /ParkingDoubleMuonLowMass3/Run2024H-MINIv6NANOv15-v3/MINIAOD

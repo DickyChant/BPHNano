@@ -31,6 +31,8 @@
 #include <limits>
 #include <algorithm>
 #include "KinVtxFitter.h"
+#include <array>
+#include <tuple>
 // ELECTRON_MASS / MUON_MASS / LEP_SIGMA come from helper.h
 
 class UpsilonTo2Mu2EBuilder : public edm::global::EDProducer<> {
@@ -42,12 +44,15 @@ public:
     bFieldToken_{esConsumes<MagneticField, IdealMagneticFieldRecord>()},
     trk1_selection_{cfg.getParameter<std::string>("trk1Selection")},
     trk2_selection_{cfg.getParameter<std::string>("trk2Selection")},
+    allow_ss_trk_pair_{cfg.getParameter<bool>("allowSameSignTrackPair")},
     pre_vtx_selection_{cfg.getParameter<std::string>("preVtxSelection")},
     post_vtx_selection_{cfg.getParameter<std::string>("postVtxSelection")},
     dileptons_{consumes<pat::CompositeCandidateCollection>( cfg.getParameter<edm::InputTag>("dileptons") )},
     leptons_ttracks_{consumes<TransientTrackCollection>( cfg.getParameter<edm::InputTag>("leptonTransientTracks") )},
     tracks_(consumes<pat::CompositeCandidateCollection>(cfg.getParameter<edm::InputTag>("tracks"))),
     ttracks_{consumes<TransientTrackCollection>( cfg.getParameter<edm::InputTag>("transientTracks") )},
+    ttracks_low_{consumes<TransientTrackCollection>( cfg.getParameter<edm::InputTag>("transientTracksLow") )},
+    ttracks_nom_{consumes<TransientTrackCollection>( cfg.getParameter<edm::InputTag>("transientTracksNominal") )},
     beamspot_{consumes<reco::BeamSpot>( cfg.getParameter<edm::InputTag>("beamSpot") )}
   {
     produces<pat::CompositeCandidateCollection>();
@@ -63,12 +68,15 @@ private:
   const edm::ESGetToken<MagneticField, IdealMagneticFieldRecord> bFieldToken_;
   const StringCutObjectSelector<pat::CompositeCandidate> trk1_selection_;
   const StringCutObjectSelector<pat::CompositeCandidate> trk2_selection_;
+  const bool allow_ss_trk_pair_;
   const StringCutObjectSelector<pat::CompositeCandidate> pre_vtx_selection_;
   const StringCutObjectSelector<pat::CompositeCandidate> post_vtx_selection_;
   const edm::EDGetTokenT<pat::CompositeCandidateCollection> dileptons_;
   const edm::EDGetTokenT<TransientTrackCollection> leptons_ttracks_;
   const edm::EDGetTokenT<pat::CompositeCandidateCollection> tracks_;
   const edm::EDGetTokenT<TransientTrackCollection> ttracks_;
+  const edm::EDGetTokenT<TransientTrackCollection> ttracks_low_;
+  const edm::EDGetTokenT<TransientTrackCollection> ttracks_nom_;
   const edm::EDGetTokenT<reco::BeamSpot> beamspot_;
 };
 
@@ -82,6 +90,10 @@ void UpsilonTo2Mu2EBuilder::produce(edm::StreamID, edm::Event &evt, edm::EventSe
   evt.getByToken(tracks_, tracks);
   edm::Handle<TransientTrackCollection> ttracks;
   evt.getByToken(ttracks_, ttracks);
+  edm::Handle<TransientTrackCollection> ttracks_low;
+  evt.getByToken(ttracks_low_, ttracks_low);
+  edm::Handle<TransientTrackCollection> ttracks_nom;
+  evt.getByToken(ttracks_nom_, ttracks_nom);
   edm::Handle<reco::BeamSpot> beamspot;
   evt.getByToken(beamspot_, beamspot);
 
@@ -106,7 +118,10 @@ void UpsilonTo2Mu2EBuilder::produce(edm::StreamID, edm::Event &evt, edm::EventSe
         edm::Ptr<pat::CompositeCandidate> trk2_ptr(tracks, trk2_idx);
         if (!trk2_selection_(*trk2_ptr)) continue;
 
-        if ((trk1_ptr->charge() + trk2_ptr->charge()) != 0) continue;
+        // Opposite-sign e pair unless a same-sign control sample was asked for. The 4-body
+        // charge is stored, so the two categories separate offline. Same-sign is the standard
+        // combinatorial control: no resonance can populate it.
+        if (!allow_ss_trk_pair_ && (trk1_ptr->charge() + trk2_ptr->charge()) != 0) continue;
 
         pat::CompositeCandidate cand;
         math::PtEtaPhiMLorentzVector l1_p4(l1_ptr->pt(), l1_ptr->eta(), l1_ptr->phi(), MUON_MASS);
@@ -126,10 +141,59 @@ void UpsilonTo2Mu2EBuilder::produce(edm::StreamID, edm::Event &evt, edm::EventSe
         cand.addUserInt("l1_idx", l1_idx);
         cand.addUserInt("l2_idx", l2_idx);
         cand.addUserInt("ll_idx", ll_idx);
-        cand.addUserInt("trk1_idx", trk1_ptr->userInt("ele_idx"));   // -> LowPtElectron table
-        cand.addUserInt("trk2_idx", trk2_ptr->userInt("ele_idx"));
+        // Index into whatever collection fed us. LowPtEleMerger stamps userInt("ele_idx")
+        // (-> LowPtElectron table); generic TrackMerger tracks have no such UserInt, so fall
+        // back to the position in the input collection (-> Track table). This is what lets the
+        // same builder run on LowPtElectron legs and on generic tracks under the e-mass
+        // hypothesis, for a like-for-like comparison.
+        cand.addUserInt("trk1_idx", trk1_ptr->hasUserInt("ele_idx") ? trk1_ptr->userInt("ele_idx")
+                                                                   : (int)trk1_idx);
+        cand.addUserInt("trk2_idx", trk2_ptr->hasUserInt("ele_idx") ? trk2_ptr->userInt("ele_idx")
+                                                                   : (int)trk2_idx);
         cand.addUserFloat("trk1_mass", ELECTRON_MASS);
         cand.addUserFloat("trk2_mass", ELECTRON_MASS);
+
+        // which electron collection each leg came from: 0 = LowPtElectron, 1 = standard
+        // Electron, -1 = generic track. Together with trk{1,2}_idx this picks the right
+        // NanoAOD table row, and (src1,src2) defines the three fit categories:
+        // (0,0) both soft, (0,1)/(1,0) mixed, (1,1) both standard.
+        cand.addUserInt("trk1_src", trk1_ptr->hasUserInt("ele_src") ? trk1_ptr->userInt("ele_src") : -1);
+        cand.addUserInt("trk2_src", trk2_ptr->hasUserInt("ele_src") ? trk2_ptr->userInt("ele_src") : -1);
+
+        // per-leg conversion match (LowPtEleMerger stamps these; generic tracks do not)
+        cand.addUserInt("trk1_conv_matched",
+                        trk1_ptr->hasUserInt("conv_matched") ? trk1_ptr->userInt("conv_matched") : -1);
+        cand.addUserInt("trk2_conv_matched",
+                        trk2_ptr->hasUserInt("conv_matched") ? trk2_ptr->userInt("conv_matched") : -1);
+        cand.addUserFloat("trk1_conv_r",
+                          trk1_ptr->hasUserFloat("conv_r") ? trk1_ptr->userFloat("conv_r") : -1.f);
+        cand.addUserFloat("trk2_conv_r",
+                          trk2_ptr->hasUserFloat("conv_r") ? trk2_ptr->userFloat("conv_r") : -1.f);
+        cand.addUserFloat("trk1_conv_dr",
+                          trk1_ptr->hasUserFloat("conv_dr") ? trk1_ptr->userFloat("conv_dr") : -1.f);
+        cand.addUserFloat("trk2_conv_dr",
+                          trk2_ptr->hasUserFloat("conv_dr") ? trk2_ptr->userFloat("conv_dr") : -1.f);
+        for (const char* v : {"lost_hits", "pass_conv_veto"}) {
+          cand.addUserInt(std::string("trk1_") + v, trk1_ptr->hasUserInt(v) ? trk1_ptr->userInt(v) : -1);
+          cand.addUserInt(std::string("trk2_") + v, trk2_ptr->hasUserInt(v) ? trk2_ptr->userInt(v) : -1);
+        }
+        // Both reconstructions of each leg, side by side (see LowPtEleMerger). has_low /
+        // has_nominal say which exist; the per-combination fitted masses below are -1 when a
+        // leg lacks the reconstruction that combination needs.
+        for (const char* v : {"has_low", "has_nominal", "low_idx", "nominal_idx"}) {
+          cand.addUserInt(std::string("trk1_") + v, trk1_ptr->hasUserInt(v) ? trk1_ptr->userInt(v) : -1);
+          cand.addUserInt(std::string("trk2_") + v, trk2_ptr->hasUserInt(v) ? trk2_ptr->userInt(v) : -1);
+        }
+        for (const char* v : {"low_pt", "low_eta", "low_phi",
+                              "nominal_pt", "nominal_eta", "nominal_phi"}) {
+          cand.addUserFloat(std::string("trk1_") + v, trk1_ptr->hasUserFloat(v) ? trk1_ptr->userFloat(v) : -1.f);
+          cand.addUserFloat(std::string("trk2_") + v, trk2_ptr->hasUserFloat(v) ? trk2_ptr->userFloat(v) : -1.f);
+        }
+
+        for (const char* v : {"sieie", "hoe"}) {
+          cand.addUserFloat(std::string("trk1_") + v, trk1_ptr->hasUserFloat(v) ? trk1_ptr->userFloat(v) : -1.f);
+          cand.addUserFloat(std::string("trk2_") + v, trk2_ptr->hasUserFloat(v) ? trk2_ptr->userFloat(v) : -1.f);
+        }
 
         auto dr_info = min_max_dr({l1_ptr, l2_ptr, trk1_ptr, trk2_ptr});
         cand.addUserFloat("min_dr", dr_info.first);
@@ -161,6 +225,90 @@ void UpsilonTo2Mu2EBuilder::produce(edm::StreamID, edm::Event &evt, edm::EventSe
         cand.addUserFloat("fitted_massErr",
                           sqrt(fitter.fitted_candidate().kinematicParametersError().matrix()(6, 6)));
         cand.addUserFloat("fitted_rapidity", fit_p4.Rapidity());
+
+        // A SEPARATE two-track fit of just the e+e- pair. The 4-track vertex is dominated by
+        // the two well-measured prompt muons and is pulled to the primary vertex regardless of
+        // where the electrons originated, so it cannot reveal a conversion. Fitting the e legs
+        // alone does: a converted photon gives a displaced ee vertex out at the beam pipe or
+        // the pixel layers, a prompt double-Dalitz pair gives one at the collision point.
+        KinVtxFitter ee_fitter(
+          { ttracks->at(trk1_idx), ttracks->at(trk2_idx) },
+          { ELECTRON_MASS, ELECTRON_MASS },
+          { LEP_SIGMA, LEP_SIGMA }
+          );
+        if (ee_fitter.success()) {
+          const auto& eevtx = ee_fitter.fitted_vtx();
+          cand.addUserFloat("ee_vtx_x", eevtx.x());
+          cand.addUserFloat("ee_vtx_y", eevtx.y());
+          cand.addUserFloat("ee_vtx_z", eevtx.z());
+          cand.addUserFloat("ee_vtx_r", std::sqrt(eevtx.x() * eevtx.x() + eevtx.y() * eevtx.y()));
+          cand.addUserFloat("ee_svprob", ee_fitter.prob());
+          cand.addUserFloat("ee_mass", ee_fitter.fitted_p4().mass());
+        } else {
+          cand.addUserFloat("ee_vtx_x", -999.f);
+          cand.addUserFloat("ee_vtx_y", -999.f);
+          cand.addUserFloat("ee_vtx_z", -999.f);
+          cand.addUserFloat("ee_vtx_r", -1.f);
+          cand.addUserFloat("ee_svprob", -1.f);
+          cand.addUserFloat("ee_mass", -1.f);
+        }
+
+        // ------------------------------------------------------------------------------
+        // The candidate mass under EVERY electron-object choice, each from its OWN 4-track
+        // KinematicVertexFit so the mass carries a real fitted uncertainty:
+        //   fitted_mass                    nominal (per leg: standard at/above the merger's
+        //                                  pT threshold, LowPtElectron below it)
+        //   fitted_mass_lowlow             both legs LowPtElectron
+        //   fitted_mass_lownominal         leg1 LowPtElectron, leg2 standard
+        //   fitted_mass_nominallow         leg1 standard,      leg2 LowPtElectron
+        //   fitted_mass_nominalnominal     both legs standard
+        // Each is -1 (with its error -1) when a leg does not have that reconstruction.
+        {
+          const bool t1_low = trk1_ptr->hasUserInt("has_low")     && trk1_ptr->userInt("has_low");
+          const bool t1_nom = trk1_ptr->hasUserInt("has_nominal") && trk1_ptr->userInt("has_nominal");
+          const bool t2_low = trk2_ptr->hasUserInt("has_low")     && trk2_ptr->userInt("has_low");
+          const bool t2_nom = trk2_ptr->hasUserInt("has_nominal") && trk2_ptr->userInt("has_nominal");
+          // Availability category, per leg and then combined:
+          //   0 = only the LowPtElectron reconstruction exists
+          //   1 = only the standard (slimmedElectron) reconstruction exists
+          //   2 = both exist
+          // ele_cat = trk1_ele_cat * 3 + trk2_ele_cat, so 0..8 -- nine categories.
+          auto leg_cat = [](bool lo, bool no) { return (lo && no) ? 2 : (no ? 1 : 0); };
+          const int c1 = leg_cat(t1_low, t1_nom), c2 = leg_cat(t2_low, t2_nom);
+          cand.addUserInt("trk1_ele_cat", c1);
+          cand.addUserInt("trk2_ele_cat", c2);
+          cand.addUserInt("ele_cat", c1 * 3 + c2);
+
+          const std::array<std::tuple<const char*, bool, bool>, 4> combos{{
+            {"lowlow",         false, false},
+            {"lownominal",     false, true },
+            {"nominallow",     true,  false},
+            {"nominalnominal", true,  true },
+          }};
+          for (const auto& c : combos) {
+            const char* nm = std::get<0>(c);
+            const bool n1 = std::get<1>(c), n2 = std::get<2>(c);
+            const bool ok1 = n1 ? t1_nom : t1_low;
+            const bool ok2 = n2 ? t2_nom : t2_low;
+            float mval = -1.f, merr = -1.f;
+            if (ok1 && ok2) {
+              KinVtxFitter f2(
+                { leptons_ttracks->at(l1_idx), leptons_ttracks->at(l2_idx),
+                  (n1 ? ttracks_nom : ttracks_low)->at(trk1_idx),
+                  (n2 ? ttracks_nom : ttracks_low)->at(trk2_idx) },
+                { MUON_MASS, MUON_MASS, ELECTRON_MASS, ELECTRON_MASS },
+                { LEP_SIGMA, LEP_SIGMA, LEP_SIGMA, LEP_SIGMA }
+                );
+              if (f2.success()) {
+                mval = f2.fitted_p4().mass();
+                merr = std::sqrt(f2.fitted_candidate().kinematicParametersError().matrix()(6, 6));
+              }
+            }
+            cand.addUserFloat(std::string("fitted_mass_") + nm, mval);
+            cand.addUserFloat(std::string("fitted_massErr_") + nm, merr);
+          }
+        }
+        // ------------------------------------------------------------------------------
 
         cand.addUserFloat("cos_theta_2D", cos_theta_2D(fitter, *beamspot, cand.p4()));
         cand.addUserFloat("fitted_cos_theta_2D", cos_theta_2D(fitter, *beamspot, fit_p4));
