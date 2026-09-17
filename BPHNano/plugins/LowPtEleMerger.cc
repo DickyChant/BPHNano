@@ -30,6 +30,17 @@
 // pT: at or above "nominalPtThreshold" the standard electron is used, below it the
 // LowPtElectron, falling back to whichever exists.
 //
+// IDENTIFICATION is stamped PER RECONSTRUCTION, not just for the winner, because the two
+// collections carry different discriminants and an analysis may want either:
+//   low_id / low_unbiased / low_ptbiased   the LowPtGsfElectron BDT scores
+//   nominal_mva_iso / nominal_mva_noiso    the standard electron MVA (name varies by era, so
+//                                          it is looked up defensively and left at -999 if absent)
+//   {low,nominal}_{sieie,hoe,lost_hits,pass_conv_veto}   cut-based inputs for each reco
+//   nominal_{einvminuspinv,deta_seed,dphi_in,r9}         the rest of the cut-based ID inputs
+// Anything unavailable is -999 (floats) / -1 (ints) rather than throwing. Set the untracked
+// parameter dumpIdNames=True to print, once, every userFloat and electronID the input
+// collections actually carry -- the reliable way to discover era-specific names.
+//
 // Each output candidate also carries userInt("ele_idx") = the index into the collection the
 // nominal choice came from, and userInt("ele_src") = 0 (LowPtElectron) or 1 (standard), so
 // trk{1,2}_idx + trk{1,2}_src point at the right NanoAOD table row.
@@ -58,8 +69,11 @@
 #include "helper.h"   // TransientTrackCollection, ELECTRON_MASS
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <memory>
+#include <sstream>
+#include <string>
 #include <vector>
 
 class LowPtEleMerger : public edm::global::EDProducer<> {
@@ -72,6 +86,7 @@ public:
     ele2Token_(use_ele2_ ? consumes<edm::View<pat::Electron>>(ele2Tag_)
                          : edm::EDGetTokenT<edm::View<pat::Electron>>()),
     convToken_(consumes<reco::ConversionCollection>(cfg.getParameter<edm::InputTag>("conversions"))),
+    dump_id_names_(cfg.getUntrackedParameter<bool>("dumpIdNames", false)),
     ele_selection_(cfg.getParameter<std::string>("electronSelection")),
     nominal_pt_(cfg.getParameter<double>("nominalPtThreshold")),
     match_dr_(cfg.getParameter<double>("overlapDeltaR")),
@@ -96,6 +111,7 @@ private:
   const bool use_ele2_;
   const edm::EDGetTokenT<edm::View<pat::Electron>> ele2Token_;
   const edm::EDGetTokenT<reco::ConversionCollection> convToken_;
+  const bool dump_id_names_;
   const StringCutObjectSelector<pat::Electron> ele_selection_;
   const double nominal_pt_, match_dr_, match_dpt_;
 };
@@ -162,6 +178,38 @@ void LowPtEleMerger::produce(edm::StreamID, edm::Event &evt, edm::EventSetup con
   };
   if (use_ele2_ && electrons2.isValid()) collect(*electrons2, true);
   collect(*electrons, false);
+
+  // --- defensive accessor: a missing ID must not throw. Checks electronIDs first (where the
+  // LowPt BDT and the MVA/cut-based WPs live) then userFloats (the raw MVA values). ---------
+  auto eid = [](const pat::Electron* e, const std::initializer_list<const char*>& names,
+                float dflt) -> float {
+    if (!e) return dflt;
+    for (const char* n : names)
+      if (e->isElectronIDAvailable(n)) return e->electronID(n);
+    for (const char* n : names)
+      if (e->hasUserFloat(n)) return e->userFloat(n);
+    return dflt;
+  };
+
+  if (dump_id_names_) {
+    // One flag PER COLLECTION, and only fire on a NON-EMPTY one: most parking events have no
+    // electron at all, so dumping on the first event processed just prints "EMPTY".
+    static std::atomic<bool> dumped_low{false}, dumped_nom{false};
+    auto show = [](const char* tag, const edm::View<pat::Electron>& c,
+                   std::atomic<bool>& flag) {
+      if (c.empty()) return;
+      bool expected = false;
+      if (!flag.compare_exchange_strong(expected, true)) return;
+      const pat::Electron& e = c[0];
+      std::ostringstream u, d;
+      for (const auto& n : e.userFloatNames()) u << " " << n;
+      for (const auto& n : e.electronIDs())    d << " " << n.first;
+      edm::LogPrint("LowPtEleMerger") << tag << " n=" << c.size() << " userFloats:" << u.str();
+      edm::LogPrint("LowPtEleMerger") << tag << " electronIDs:" << d.str();
+    };
+    show("[LowPtElectron]", *electrons, dumped_low);
+    if (use_ele2_ && electrons2.isValid()) show("[slimmedElectrons]", *electrons2, dumped_nom);
+  }
 
   auto ele_out   = std::make_unique<pat::CompositeCandidateCollection>();
   auto trans_out = std::make_unique<TransientTrackCollection>();
@@ -239,6 +287,76 @@ void LowPtEleMerger::produce(edm::StreamID, edm::Event &evt, edm::EventSetup con
     pcand.addUserInt("pass_conv_veto", sel.ele->passConversionVeto() ? 1 : 0);
     pcand.addUserFloat("sieie", sel.ele->full5x5_sigmaIetaIeta());
     pcand.addUserFloat("hoe",   sel.ele->hcalOverEcal());
+
+    // ---- identification, stamped separately for each reconstruction --------------------
+    auto stamp_quality = [&](const char* pfx, const Reco& r) {
+      std::string P(pfx);
+      pcand.addUserInt(P + "lost_hits", r.ok ? (int)r.gsf->hitPattern().numberOfLostHits(
+                                 reco::HitPattern::MISSING_INNER_HITS) : -1);
+      pcand.addUserInt(P + "pass_conv_veto", r.ok ? (r.ele->passConversionVeto() ? 1 : 0) : -1);
+      pcand.addUserFloat(P + "sieie", r.ok ? r.ele->full5x5_sigmaIetaIeta() : -999.f);
+      pcand.addUserFloat(P + "hoe",   r.ok ? r.ele->hcalOverEcal()          : -999.f);
+    };
+    stamp_quality("low_",     m.low);
+    stamp_quality("nominal_", m.nom);
+
+    // LowPtGsfElectron BDT scores. VERIFIED by dumping a real 2025 parking MiniAOD: these are
+    // electronIDs, NOT userFloats -- reading them with userFloat() silently yields nothing.
+    const pat::Electron* le = m.low.ok ? m.low.ele : nullptr;
+    pcand.addUserFloat("low_id",       eid(le, {"ID"},       -999.f));
+    pcand.addUserFloat("low_unbiased", eid(le, {"unbiased"}, -999.f));
+    pcand.addUserFloat("low_ptbiased", eid(le, {"ptbiased"}, -999.f));
+
+    // Standard-electron MVA. BPH-24-001 uses the NO-ISOLATION discriminant, so that is the one
+    // to cut on; the iso value is kept alongside for reference. Names carry the training
+    // campaign, so the Run-3 (RunIIIWinter22) spelling is tried first and Fall17 V2 second --
+    // both are present in the parking MiniAOD, which is reprocessed with the full EGamma suite.
+    const pat::Electron* ne = m.nom.ok ? m.nom.ele : nullptr;
+    pcand.addUserFloat("nominal_mva_noiso", eid(ne,
+        {"ElectronMVAEstimatorRun2RunIIIWinter22NoIsoV1Values",
+         "ElectronMVAEstimatorRun2Fall17NoIsoV2Values",
+         "ElectronMVAEstimatorRun2Fall17NoIsoV1Values"}, -999.f));
+    pcand.addUserFloat("nominal_mva_iso", eid(ne,
+        {"ElectronMVAEstimatorRun2RunIIIWinter22IsoV1Values",
+         "ElectronMVAEstimatorRun2Fall17IsoV2Values",
+         "ElectronMVAEstimatorRun2Summer18ULIdIsoValues"}, -999.f));
+
+    // Working points of the same no-isolation MVA, as flags.
+    pcand.addUserInt("nominal_mva_noiso_wp80", (int)eid(ne,
+        {"mvaEleID-RunIIIWinter22-noIso-V1-wp80", "mvaEleID-Fall17-noIso-V2-wp80"}, -1.f));
+    pcand.addUserInt("nominal_mva_noiso_wp90", (int)eid(ne,
+        {"mvaEleID-RunIIIWinter22-noIso-V1-wp90", "mvaEleID-Fall17-noIso-V2-wp90"}, -1.f));
+
+    // Cut-based ID packed as a level: 0 fails veto, 1 veto, 2 loose, 3 medium, 4 tight, -1 if
+    // unavailable. CAVEAT: the standard cut-based WPs INCLUDE an isolation cut, and the VID
+    // nested bitmap that would let it be removed is not embedded in MiniAOD. For a genuinely
+    // isolation-free selection use nominal_mva_noiso; this is here for cross-checks.
+    int cb = -1;
+    if (ne) {
+      cb = 0;
+      const char* lv[4][2] = {{"cutBasedElectronID-RunIIIWinter22-V1-veto",   "cutBasedElectronID-Fall17-94X-V2-veto"},
+                              {"cutBasedElectronID-RunIIIWinter22-V1-loose",  "cutBasedElectronID-Fall17-94X-V2-loose"},
+                              {"cutBasedElectronID-RunIIIWinter22-V1-medium", "cutBasedElectronID-Fall17-94X-V2-medium"},
+                              {"cutBasedElectronID-RunIIIWinter22-V1-tight",  "cutBasedElectronID-Fall17-94X-V2-tight"}};
+      for (int k = 0; k < 4; ++k)
+        if (eid(ne, {lv[k][0], lv[k][1]}, 0.f) > 0.5f) cb = k + 1;
+    }
+    pcand.addUserInt("nominal_cutbased", cb);
+
+    // Remaining cut-based ID inputs for the standard leg (always computable off pat::Electron).
+    if (ne) {
+      const float ecal = ne->ecalEnergy();
+      pcand.addUserFloat("nominal_einvminuspinv",
+                         ecal > 0.f ? (1.f - ne->eSuperClusterOverP()) / ecal : -999.f);
+      pcand.addUserFloat("nominal_deta_seed", ne->deltaEtaSuperClusterTrackAtVtx());
+      pcand.addUserFloat("nominal_dphi_in",   ne->deltaPhiSuperClusterTrackAtVtx());
+      pcand.addUserFloat("nominal_r9",        ne->full5x5_r9());
+    } else {
+      pcand.addUserFloat("nominal_einvminuspinv", -999.f);
+      pcand.addUserFloat("nominal_deta_seed",     -999.f);
+      pcand.addUserFloat("nominal_dphi_in",       -999.f);
+      pcand.addUserFloat("nominal_r9",            -999.f);
+    }
 
     ele_out->emplace_back(pcand);
     trans_out->emplace_back(selTT);

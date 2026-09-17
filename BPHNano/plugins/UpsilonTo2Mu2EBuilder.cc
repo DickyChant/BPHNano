@@ -190,9 +190,25 @@ void UpsilonTo2Mu2EBuilder::produce(edm::StreamID, edm::Event &evt, edm::EventSe
           cand.addUserFloat(std::string("trk2_") + v, trk2_ptr->hasUserFloat(v) ? trk2_ptr->userFloat(v) : -1.f);
         }
 
-        for (const char* v : {"sieie", "hoe"}) {
-          cand.addUserFloat(std::string("trk1_") + v, trk1_ptr->hasUserFloat(v) ? trk1_ptr->userFloat(v) : -1.f);
-          cand.addUserFloat(std::string("trk2_") + v, trk2_ptr->hasUserFloat(v) ? trk2_ptr->userFloat(v) : -1.f);
+        // Quality + identification. Stamped PER RECONSTRUCTION by LowPtEleMerger, so a leg
+        // reconstructed both ways carries both the LowPt BDT and the standard MVA. Missing
+        // values are -999 (the merger's sentinel), NOT -1, so they cannot be confused with a
+        // genuine discriminant value -- several of these are legitimately negative.
+        for (const char* v : {"sieie", "hoe",
+                              "low_sieie", "low_hoe", "nominal_sieie", "nominal_hoe",
+                              "low_id", "low_unbiased", "low_ptbiased",
+                              "nominal_mva_noiso", "nominal_mva_iso",
+                              "nominal_einvminuspinv", "nominal_deta_seed",
+                              "nominal_dphi_in", "nominal_r9"}) {
+          cand.addUserFloat(std::string("trk1_") + v, trk1_ptr->hasUserFloat(v) ? trk1_ptr->userFloat(v) : -999.f);
+          cand.addUserFloat(std::string("trk2_") + v, trk2_ptr->hasUserFloat(v) ? trk2_ptr->userFloat(v) : -999.f);
+        }
+        for (const char* v : {"low_lost_hits", "low_pass_conv_veto",
+                              "nominal_lost_hits", "nominal_pass_conv_veto",
+                              "nominal_mva_noiso_wp80", "nominal_mva_noiso_wp90",
+                              "nominal_cutbased"}) {
+          cand.addUserInt(std::string("trk1_") + v, trk1_ptr->hasUserInt(v) ? trk1_ptr->userInt(v) : -1);
+          cand.addUserInt(std::string("trk2_") + v, trk2_ptr->hasUserInt(v) ? trk2_ptr->userInt(v) : -1);
         }
 
         auto dr_info = min_max_dr({l1_ptr, l2_ptr, trk1_ptr, trk2_ptr});
