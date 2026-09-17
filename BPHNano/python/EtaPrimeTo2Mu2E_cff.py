@@ -34,7 +34,8 @@ from PhysicsTools.BPHNano.EtaMuMu_cff import EtaMuMu
 # ============================================================================
 
 ETAP_MASS_MIN = 0.45      # was 0.80; lowered to include the eta(548) calibration line
-ETAP_MASS_MAX = 1.15
+ETAP_MASS_MAX = 1.40      # was 1.15; widened so the 1.08 structure has an upper sideband
+                          # and the eta prime background has a lever arm at the top of the range
 
 # charge: |q| <= 2 keeps BOTH the opposite-sign signal (q = 0) and the same-sign e+e+ / e-e-
 # combinatorial control (q = +-2, since the dimuon is already required opposite-sign). The
