@@ -1,0 +1,42 @@
+# eta'(958) -> 2mu2e + mu mu gamma, 2026 B+D. CMSSW_16_0_9 / el9_amd64_gcc13 ONLY:
+# 2026 MiniAOD was written by a 16_0_X release and EDM has no forward compatibility,
+# so a 15_0_15 job dies with FormatIncompatibility. Do not merge this into
+# samples_etaprime.yml, which is submitted from the 15X area.
+#
+# lumimask is a LOCAL file, not a URL: the central golden JSON covers all of 2026, and
+# this one is filtered to the B and D run ranges (401837-402513, 403423-404067) with the
+# half-FPIX runs dropped. Those three runs (403894/403895/403937) turn out never to have
+# been certified, so the veto costs 0 lumis -- it is kept as belt and braces.
+# Era A (401630-401803, 7366 certified lumis) is deliberately NOT included.
+common:
+  data: {splitting: 50}
+  mc:   {splitting: 1}
+samples:
+  data_Run2026B:
+    isMC: False
+    mode: 'ele'
+    globaltag: 160X_dataRun3_Prompt_v1
+    lumimask: /uscms_data/d3/sitianq/bph_nano/CMSSW_16_0_9/src/PhysicsTools/BPHNano/production/golden/golden_2026BD.json
+    datasets:
+      - /ParkingDoubleMuonLowMass0/Run2026B-PromptReco-v1/MINIAOD
+      - /ParkingDoubleMuonLowMass1/Run2026B-PromptReco-v1/MINIAOD
+      - /ParkingDoubleMuonLowMass2/Run2026B-PromptReco-v1/MINIAOD
+      - /ParkingDoubleMuonLowMass3/Run2026B-PromptReco-v1/MINIAOD
+      - /ParkingDoubleMuonLowMass4/Run2026B-PromptReco-v1/MINIAOD
+      - /ParkingDoubleMuonLowMass5/Run2026B-PromptReco-v1/MINIAOD
+      - /ParkingDoubleMuonLowMass6/Run2026B-PromptReco-v1/MINIAOD
+      - /ParkingDoubleMuonLowMass7/Run2026B-PromptReco-v1/MINIAOD
+  data_Run2026D:
+    isMC: False
+    mode: 'ele'
+    globaltag: 160X_dataRun3_Prompt_v1
+    lumimask: /uscms_data/d3/sitianq/bph_nano/CMSSW_16_0_9/src/PhysicsTools/BPHNano/production/golden/golden_2026BD.json
+    datasets:
+      - /ParkingDoubleMuonLowMass0/Run2026D-PromptReco-v1/MINIAOD
+      - /ParkingDoubleMuonLowMass1/Run2026D-PromptReco-v1/MINIAOD
+      - /ParkingDoubleMuonLowMass2/Run2026D-PromptReco-v1/MINIAOD
+      - /ParkingDoubleMuonLowMass3/Run2026D-PromptReco-v1/MINIAOD
+      - /ParkingDoubleMuonLowMass4/Run2026D-PromptReco-v1/MINIAOD
+      - /ParkingDoubleMuonLowMass5/Run2026D-PromptReco-v1/MINIAOD
+      - /ParkingDoubleMuonLowMass6/Run2026D-PromptReco-v1/MINIAOD
+      - /ParkingDoubleMuonLowMass7/Run2026D-PromptReco-v1/MINIAOD
