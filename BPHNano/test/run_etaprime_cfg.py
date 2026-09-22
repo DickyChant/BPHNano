@@ -86,9 +86,14 @@ import PhysicsTools.BPHNano.EtaPrimeTo2Mu2E_cff as ep
 _counts = []
 if options.variant in ('lowpt', 'all'): _counts.append(('EtaPrimeTo2Mu2ELowPt', ep.CountEtaPrimeTo2Mu2ELowPt))
 if options.variant in ('ele', 'all'):           _counts.append(('EtaPrimeTo2Mu2EEle',   ep.CountEtaPrimeTo2Mu2EEle))
-# NOTE: the mu mu gamma normalisation channel is deliberately NOT added to the skim OR --
-# it is far more abundant than the 2mu2e signal and would blow the output size up.
-# It rides along in events the 2mu2e skim already keeps.
+# The mu mu gamma NORMALISATION channel is in the skim OR in its own right. It used to be left
+# out ("rides along in events the 2mu2e skim already keeps"), which kept only the ~2% of it that
+# happens to share an event with a 2mu2e candidate -- a biased subset, and far too little to
+# normalise with. Measured on Run2025D: 2mu2e alone skims 4e-4 of events, with mumugamma the OR
+# is 5.8e-3, i.e. ~180 GB over 2022-2025 at ~1.35 kB/event. That cost is accepted deliberately.
+if options.variant in ('ele', 'all', 'gamma'):
+    import PhysicsTools.BPHNano.EtaPrimeToMuMuGamma_cff as eg
+    _counts.append(('EtaPrimeToMuMuGamma', eg.CountEtaPrimeToMuMuGamma))
 
 process.NANOAODoutput_step = cms.EndPath(process.NANOAODoutput)
 if options.skim:

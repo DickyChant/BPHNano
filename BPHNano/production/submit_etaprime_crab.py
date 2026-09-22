@@ -40,7 +40,12 @@ def parse_args():
                    help='override the per-sample mode (default: use sample value, else 4l)')
     p.add_argument('--maxevents', type=int, default=-1)
     p.add_argument('--numcores', type=int, default=1, help='cores/threads per job (CRAB numCores + pset nThreads)')
-    p.add_argument('--maxmemory', type=int, default=2500, help='per-job memory cap MB (raise for many cores)')
+    p.add_argument('--maxmemory', type=int, default=3500,
+                   help='per-job memory cap MB. Measured on ep_2026Sep08: median 1935, p90 2612, '
+                        'worst 4158 -- do NOT inflate this, an oversized request is what got '
+                        '54%% of that campaign idle-killed')
+    p.add_argument('--maxruntime', type=int, default=1400,
+                   help='per-job wall-clock cap in MINUTES (CRAB maxJobRuntimeMin)')
     p.add_argument('--unitsperjob', type=int, default=None,
                    help="FileBased: files/job. Automatic: TARGET JOB RUNTIME IN MINUTES (min 180).")
     p.add_argument('--splitting', default='FileBased', choices=['FileBased', 'Automatic'],
@@ -148,7 +153,11 @@ def main():
             # NOTE: maxJobRuntimeMin is REJECTED by CRAB when splitting='Automatic'
             # (with Automatic, Data.unitsPerJob IS the target runtime in minutes).
             if args.splitting != 'Automatic':
-                c.JobType.maxJobRuntimeMin = 2700
+                # 2700 min (45 h) was requested for ep_2026Sep08 and, together with an 8 GB
+                # memory request against ~2 GB actual use, restricted the jobs to so few slots
+                # that 4077 of them were killed by the scheduler for excessive idle time
+                # (exit 50665) -- 54% of the campaign. Ask for what the jobs actually need.
+                c.JobType.maxJobRuntimeMin = args.maxruntime
             c.JobType.numCores = args.numcores
             c.JobType.maxMemoryMB = args.maxmemory
             c.JobType.allowUndistributedCMSSW = True
