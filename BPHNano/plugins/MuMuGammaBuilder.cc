@@ -28,6 +28,8 @@
 
 #include "FWCore/Framework/interface/global/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include <atomic>
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/InputTag.h"
@@ -35,6 +37,8 @@
 #include "DataFormats/PatCandidates/interface/CompositeCandidate.h"
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
+#include "DataFormats/NanoAOD/interface/FlatTable.h"
+#include "FWCore/Utilities/interface/Exception.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/Math/interface/deltaR.h"
 
@@ -53,8 +57,15 @@ public:
     beamspot_{consumes<reco::BeamSpot>(cfg.getParameter<edm::InputTag>("beamSpot"))},
     photon_selection_{cfg.getParameter<std::string>("photonSelection")},
     pre_sel_{cfg.getParameter<std::string>("preSelection")},
-    post_sel_{cfg.getParameter<std::string>("postSelection")}
-  { produces<pat::CompositeCandidateCollection>(); }
+    post_sel_{cfg.getParameter<std::string>("postSelection")},
+    throw_on_missing_{parse_policy(cfg.getParameter<std::string>("missingPhotons"))}
+  {
+    produces<pat::CompositeCandidateCollection>();
+    // Per-event record of whether the photon input existed, so an analysis can see -- and
+    // correct the normalisation for -- events where mu mu gamma was impossible rather than
+    // merely empty. One row per event (singleton table).
+    produces<nanoaod::FlatTable>("photonStatus");
+  }
 
   ~MuMuGammaBuilder() override {}
   void produce(edm::StreamID, edm::Event&, const edm::EventSetup&) const override;
@@ -64,8 +75,15 @@ private:
   const edm::EDGetTokenT<pat::CompositeCandidateCollection> photons_;
   const edm::EDGetTokenT<reco::BeamSpot> beamspot_;
   const StringCutObjectSelector<pat::CompositeCandidate> photon_selection_;
+  static bool parse_policy(const std::string& p) {
+    if (p == "skip")  return false;
+    if (p == "throw") return true;
+    throw cms::Exception("Configuration") << "MuMuGammaBuilder: missingPhotons must be 'skip' or "
+                                             "'throw', got '" << p << "'";
+  }
   const StringCutObjectSelector<pat::CompositeCandidate> pre_sel_;
   const StringCutObjectSelector<pat::CompositeCandidate> post_sel_;
+  const bool throw_on_missing_;
 };
 
 void MuMuGammaBuilder::produce(edm::StreamID, edm::Event &evt, edm::EventSetup const &) const {
@@ -78,6 +96,32 @@ void MuMuGammaBuilder::produce(edm::StreamID, edm::Event &evt, edm::EventSetup c
   evt.getByToken(beamspot_, beamspot);
 
   auto ret = std::make_unique<pat::CompositeCandidateCollection>();
+
+  // oniaPhotonCandidates:conversions is DECLARED in every Run-3 parking MiniAOD version
+  // (checked on all 39 era x processing versions, 2022C through 2026D) but is not written in
+  // every event: on Run2022C PromptReco an event with a dimuon had no such product, and the
+  // unchecked handle threw ProductNotFound, killing the job. No photons -> no candidates.
+  auto status = std::make_unique<nanoaod::FlatTable>(1, "EtaPrimeToMuMuGammaInput", true);
+  status->addColumnValue<bool>("photonsPresent", photons.isValid(),
+                               "oniaPhotonCandidates:conversions existed in this event");
+  status->addColumnValue<int>("nPhotons", photons.isValid() ? (int)photons->size() : -1,
+                              "number of input conversions (-1: collection absent)");
+  evt.put(std::move(status), "photonStatus");
+
+  if (!photons.isValid()) {
+    // missingPhotons='throw' restores the strict behaviour -- use it to AUDIT a dataset.
+    if (throw_on_missing_)
+      throw cms::Exception("ProductNotFound") << "MuMuGammaBuilder: photon collection absent "
+          "(missingPhotons='throw'); set missingPhotons='skip' to tolerate it";
+    static std::atomic<bool> warned{false};
+    bool expected = false;
+    if (warned.compare_exchange_strong(expected, true))
+      edm::LogWarning("MuMuGammaBuilder") << "photon collection absent in this event (first "
+          "occurrence; further ones are silent) -- emitting no mu mu gamma candidates for it. "
+          "Per-event status is in EtaPrimeToMuMuGammaInput_photonsPresent.";
+    evt.put(std::move(ret));
+    return;
+  }
 
   for (size_t ll_idx = 0; ll_idx < dileptons->size(); ++ll_idx) {
     edm::Ptr<pat::CompositeCandidate> ll_ptr(dileptons, ll_idx);

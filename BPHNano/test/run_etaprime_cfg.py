@@ -21,6 +21,8 @@ options.register('outputFiles', 'etaprime_nano.root', VarParsing.multiplicity.si
 options.register('skim', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int, "1: keep events with >=1 eta' candidate (either variant); 0: keep all")
 options.register('variant', 'ele', VarParsing.multiplicity.singleton, VarParsing.varType.string, "e-leg variant: 'ele' (default, ONE pass over the OR of both electron collections), 'lowpt', or 'all'")
 options.register('wideWindow', 0, VarParsing.multiplicity.singleton, VarParsing.varType.int, "diagnostic: open the mass window (0.3-3.0) + drop post-fit mass cut")
+options.register('mumugamma', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int, "1: build + skim on the mu mu gamma normalisation channel; 0: drop it entirely")
+options.register('missingPhotons', 'skip', VarParsing.multiplicity.singleton, VarParsing.varType.string, "mu mu gamma when oniaPhotonCandidates is absent in an event: 'skip' or 'throw' (audit)")
 options.register('nThreads', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int, "cmsRun threads/streams (set = CRAB JobType.numCores)")
 options.setDefault('maxEvents', -1)
 options.parseArguments()
@@ -64,6 +66,7 @@ process.NANOAODoutput = cms.OutputModule("NanoAODOutputModule",
         'keep nanoaodFlatTable_*Table_*_*',      # Muon, LowPtElectron, EtaMuMu, EtaPrimeTo2Mu2E*, PV, (PU/gen on MC)
         'keep nanoaodUniqueString_nanoMetadata_*_*',
         'keep edmTriggerResults_*_*_*',          # HLT bits
+        'keep nanoaodFlatTable_EtaPrimeToMuMuGamma_photonStatus_*',   # per-event photon-input flag
     ),
 )
 
@@ -71,10 +74,17 @@ from PhysicsTools.BPHNano.nanoBPH_cff import nanoAOD_customizeMC, nanoAOD_custom
 if options.isMC:
     process = nanoAOD_customizeMC(process)
 process = nanoAOD_customizeEtaPrime2Mu2E(process, options.isMC, variant=options.variant)
+if hasattr(process, 'EtaPrimeToMuMuGamma'):
+    process.EtaPrimeToMuMuGamma.missingPhotons = cms.string(options.missingPhotons)
+    if not options.mumugamma:
+        # remove the builder and its table from the sequence; the skim below skips it too
+        process.nanoSequence.remove(process.EtaPrimeToMuMuGamma)
+        if hasattr(process, 'EtaPrimeToMuMuGammaTable'):
+            process.nanoSequence.remove(process.EtaPrimeToMuMuGammaTable)
 
 _active = [process.EtaPrimeTo2Mu2ELowPt] if options.variant in ('lowpt','all') else []
 if options.variant in ('ele','all'):        _active.append(process.EtaPrimeTo2Mu2EEle)
-if options.variant in ('ele','all','gamma'): _active.append(process.EtaPrimeToMuMuGamma)
+if options.mumugamma and options.variant in ('ele','all','gamma'): _active.append(process.EtaPrimeToMuMuGamma)
 
 if options.wideWindow:   # diagnostic: measure the real candidate rate + full m(2mu2e) spectrum
     for b in _active:
@@ -91,7 +101,7 @@ if options.variant in ('ele', 'all'):           _counts.append(('EtaPrimeTo2Mu2E
 # happens to share an event with a 2mu2e candidate -- a biased subset, and far too little to
 # normalise with. Measured on Run2025D: 2mu2e alone skims 4e-4 of events, with mumugamma the OR
 # is 5.8e-3, i.e. ~180 GB over 2022-2025 at ~1.35 kB/event. That cost is accepted deliberately.
-if options.variant in ('ele', 'all', 'gamma'):
+if options.mumugamma and options.variant in ('ele', 'all', 'gamma'):
     import PhysicsTools.BPHNano.EtaPrimeToMuMuGamma_cff as eg
     _counts.append(('EtaPrimeToMuMuGamma', eg.CountEtaPrimeToMuMuGamma))
 

@@ -1,0 +1,370 @@
+# eta'(958) -> 2mu2e + mu mu gamma. ALL eras, submitted from CMSSW_16_0_9 / el9_amd64_gcc13.
+# One release for everything: 16X reads the 2022-2025 MiniAOD (EDM is backward compatible) and
+# was checked to reproduce 15X output bit for bit on 2023D rereco, 2024G MINIv6 and 2025D prompt
+# (247 eta'/electron/muon branches, identical event lists and candidate counts).
+#
+# Processing choice per era:
+#   2022C, 2022D  10Dec2022 ReReco  (-v2; ParkingDoubleMuonLowMass1 is -v3). NOT PromptReco:
+#                 C/D prompt has ECAL issues, and 2022C prompt is also missing
+#                 oniaPhotonCandidates in ~10% of events (declared but not written).
+#   2022E         PromptReco        (no issue there)
+#   2022F-G, 2023 22Sep2023 ReReco
+#   2024          MINIv6NANOv15
+#   2025, 2026    PromptReco
+# lumimask: golden JSON URL per year; 2026 is a LOCAL file filtered to B+D (see golden/).
+common:
+  data:
+    splitting: 50
+  mc:
+    splitting: 1
+samples:
+  data_Run2022C:
+    isMC: false
+    mode: ele
+    globaltag: 150X_dataRun3_v2
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions22/Cert_Collisions2022_355100_362760_Golden.json
+    datasets:
+    - /ParkingDoubleMuonLowMass0/Run2022C-10Dec2022-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2022C-10Dec2022-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2022C-10Dec2022-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2022C-10Dec2022-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2022C-10Dec2022-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2022C-10Dec2022-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2022C-10Dec2022-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2022C-10Dec2022-v2/MINIAOD
+  data_Run2022D:
+    isMC: false
+    mode: ele
+    globaltag: 150X_dataRun3_v2
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions22/Cert_Collisions2022_355100_362760_Golden.json
+    datasets:
+    - /ParkingDoubleMuonLowMass0/Run2022D-10Dec2022-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2022D-10Dec2022-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2022D-10Dec2022-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2022D-10Dec2022-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2022D-10Dec2022-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2022D-10Dec2022-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2022D-10Dec2022-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2022D-10Dec2022-v2/MINIAOD
+  data_Run2022E:
+    isMC: false
+    mode: ele
+    globaltag: 150X_dataRun3_v2
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions22/Cert_Collisions2022_355100_362760_Golden.json
+    datasets:
+    - /ParkingDoubleMuonLowMass0/Run2022E-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2022E-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2022E-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2022E-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2022E-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2022E-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2022E-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2022E-PromptReco-v1/MINIAOD
+  data_Run2022F:
+    isMC: false
+    mode: ele
+    globaltag: 150X_dataRun3_v2
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions22/Cert_Collisions2022_355100_362760_Golden.json
+    datasets:
+    - /ParkingDoubleMuonLowMass0/Run2022F-22Sep2023-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2022F-22Sep2023-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2022F-22Sep2023-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2022F-22Sep2023-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2022F-22Sep2023-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2022F-22Sep2023-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2022F-22Sep2023-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2022F-22Sep2023-v1/MINIAOD
+  data_Run2022G:
+    isMC: false
+    mode: ele
+    globaltag: 150X_dataRun3_v2
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions22/Cert_Collisions2022_355100_362760_Golden.json
+    datasets:
+    - /ParkingDoubleMuonLowMass0/Run2022G-22Sep2023-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2022G-22Sep2023-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2022G-22Sep2023-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2022G-22Sep2023-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2022G-22Sep2023-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2022G-22Sep2023-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2022G-22Sep2023-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2022G-22Sep2023-v1/MINIAOD
+  data_Run2023C:
+    isMC: false
+    mode: ele
+    globaltag: 150X_dataRun3_v2
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions23/Cert_Collisions2023_366442_370790_Golden.json
+    datasets:
+    - /ParkingDoubleMuonLowMass0/Run2023C-22Sep2023_v1-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass0/Run2023C-22Sep2023_v2-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass0/Run2023C-22Sep2023_v3-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass0/Run2023C-22Sep2023_v4-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2023C-22Sep2023_v1-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2023C-22Sep2023_v2-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2023C-22Sep2023_v3-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2023C-22Sep2023_v4-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2023C-22Sep2023_v1-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2023C-22Sep2023_v2-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2023C-22Sep2023_v3-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2023C-22Sep2023_v4-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2023C-22Sep2023_v1-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2023C-22Sep2023_v2-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2023C-22Sep2023_v3-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2023C-22Sep2023_v4-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2023C-22Sep2023_v1-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2023C-22Sep2023_v2-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2023C-22Sep2023_v3-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2023C-22Sep2023_v4-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2023C-22Sep2023_v1-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2023C-22Sep2023_v2-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2023C-22Sep2023_v3-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2023C-22Sep2023_v4-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2023C-22Sep2023_v1-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2023C-22Sep2023_v2-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2023C-22Sep2023_v3-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2023C-22Sep2023_v4-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2023C-22Sep2023_v1-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2023C-22Sep2023_v2-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2023C-22Sep2023_v3-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2023C-22Sep2023_v4-v1/MINIAOD
+  data_Run2023D:
+    isMC: false
+    mode: ele
+    globaltag: 150X_dataRun3_v2
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions23/Cert_Collisions2023_366442_370790_Golden.json
+    datasets:
+    - /ParkingDoubleMuonLowMass0/Run2023D-22Sep2023_v1-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass0/Run2023D-22Sep2023_v2-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2023D-22Sep2023_v1-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2023D-22Sep2023_v2-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2023D-22Sep2023_v1-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2023D-22Sep2023_v2-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2023D-22Sep2023_v1-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2023D-22Sep2023_v2-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2023D-22Sep2023_v1-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2023D-22Sep2023_v2-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2023D-22Sep2023_v1-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2023D-22Sep2023_v2-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2023D-22Sep2023_v1-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2023D-22Sep2023_v2-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2023D-22Sep2023_v1-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2023D-22Sep2023_v2-v1/MINIAOD
+  data_Run2024C:
+    isMC: false
+    mode: ele
+    globaltag: 150X_dataRun3_v2
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions24/Cert_Collisions2024_378981_386951_Golden.json
+    datasets:
+    - /ParkingDoubleMuonLowMass0/Run2024C-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2024C-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2024C-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2024C-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2024C-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2024C-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2024C-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2024C-MINIv6NANOv15-v1/MINIAOD
+  data_Run2024D:
+    isMC: false
+    mode: ele
+    globaltag: 150X_dataRun3_v2
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions24/Cert_Collisions2024_378981_386951_Golden.json
+    datasets:
+    - /ParkingDoubleMuonLowMass0/Run2024D-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2024D-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2024D-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2024D-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2024D-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2024D-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2024D-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2024D-MINIv6NANOv15-v1/MINIAOD
+  data_Run2024E:
+    isMC: false
+    mode: ele
+    globaltag: 150X_dataRun3_v2
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions24/Cert_Collisions2024_378981_386951_Golden.json
+    datasets:
+    - /ParkingDoubleMuonLowMass0/Run2024E-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2024E-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2024E-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2024E-MINIv6NANOv15-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2024E-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2024E-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2024E-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2024E-MINIv6NANOv15-v1/MINIAOD
+  data_Run2024F:
+    isMC: false
+    mode: ele
+    globaltag: 150X_dataRun3_v2
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions24/Cert_Collisions2024_378981_386951_Golden.json
+    datasets:
+    - /ParkingDoubleMuonLowMass0/Run2024F-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2024F-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2024F-MINIv6NANOv15-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2024F-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2024F-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2024F-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2024F-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2024F-MINIv6NANOv15-v3/MINIAOD
+  data_Run2024G:
+    isMC: false
+    mode: ele
+    globaltag: 150X_dataRun3_v2
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions24/Cert_Collisions2024_378981_386951_Golden.json
+    datasets:
+    - /ParkingDoubleMuonLowMass0/Run2024G-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2024G-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2024G-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2024G-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2024G-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2024G-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2024G-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2024G-MINIv6NANOv15-v4/MINIAOD
+  data_Run2024H:
+    isMC: false
+    mode: ele
+    globaltag: 150X_dataRun3_v2
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions24/Cert_Collisions2024_378981_386951_Golden.json
+    datasets:
+    - /ParkingDoubleMuonLowMass0/Run2024H-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2024H-MINIv6NANOv15-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2024H-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2024H-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2024H-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2024H-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2024H-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2024H-MINIv6NANOv15-v3/MINIAOD
+  data_Run2024I:
+    isMC: false
+    mode: ele
+    globaltag: 150X_dataRun3_v2
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions24/Cert_Collisions2024_378981_386951_Golden.json
+    datasets:
+    - /ParkingDoubleMuonLowMass0/Run2024I-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass0/Run2024I-MINIv6NANOv15_v2-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2024I-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2024I-MINIv6NANOv15_v2-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2024I-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2024I-MINIv6NANOv15_v2-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2024I-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2024I-MINIv6NANOv15_v2-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2024I-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2024I-MINIv6NANOv15_v2-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2024I-MINIv6NANOv15-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2024I-MINIv6NANOv15_v2-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2024I-MINIv6NANOv15-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2024I-MINIv6NANOv15_v2-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2024I-MINIv6NANOv15-v3/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2024I-MINIv6NANOv15_v2-v2/MINIAOD
+  data_Run2025C:
+    isMC: false
+    mode: ele
+    globaltag: 150X_dataRun3_Prompt_v1
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions25/Cert_Collisions2025_391658_398903_Golden.json
+    datasets:
+    - /ParkingDoubleMuonLowMass0/Run2025C-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass0/Run2025C-PromptReco-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2025C-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2025C-PromptReco-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2025C-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2025C-PromptReco-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2025C-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2025C-PromptReco-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2025C-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2025C-PromptReco-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2025C-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2025C-PromptReco-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2025C-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2025C-PromptReco-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2025C-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2025C-PromptReco-v2/MINIAOD
+  data_Run2025D:
+    isMC: false
+    mode: ele
+    globaltag: 150X_dataRun3_Prompt_v1
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions25/Cert_Collisions2025_391658_398903_Golden.json
+    datasets:
+    - /ParkingDoubleMuonLowMass0/Run2025D-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2025D-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2025D-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2025D-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2025D-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2025D-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2025D-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2025D-PromptReco-v1/MINIAOD
+  data_Run2025E:
+    isMC: false
+    mode: ele
+    globaltag: 150X_dataRun3_Prompt_v1
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions25/Cert_Collisions2025_391658_398903_Golden.json
+    datasets:
+    - /ParkingDoubleMuonLowMass0/Run2025E-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2025E-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2025E-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2025E-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2025E-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2025E-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2025E-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2025E-PromptReco-v1/MINIAOD
+  data_Run2025F:
+    isMC: false
+    mode: ele
+    globaltag: 150X_dataRun3_Prompt_v1
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions25/Cert_Collisions2025_391658_398903_Golden.json
+    datasets:
+    - /ParkingDoubleMuonLowMass0/Run2025F-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass0/Run2025F-PromptReco-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2025F-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2025F-PromptReco-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2025F-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2025F-PromptReco-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2025F-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2025F-PromptReco-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2025F-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2025F-PromptReco-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2025F-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2025F-PromptReco-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2025F-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2025F-PromptReco-v2/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2025F-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2025F-PromptReco-v2/MINIAOD
+  data_Run2025G:
+    isMC: false
+    mode: ele
+    globaltag: 150X_dataRun3_Prompt_v1
+    lumimask: https://cms-service-dqmdc.web.cern.ch/CAF/certification/Collisions25/Cert_Collisions2025_391658_398903_Golden.json
+    datasets:
+    - /ParkingDoubleMuonLowMass0/Run2025G-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2025G-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2025G-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2025G-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2025G-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2025G-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2025G-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2025G-PromptReco-v1/MINIAOD
+  data_Run2026B:
+    isMC: false
+    mode: ele
+    globaltag: 160X_dataRun3_Prompt_v1
+    lumimask: /uscms_data/d3/sitianq/bph_nano/CMSSW_16_0_9/src/PhysicsTools/BPHNano/production/golden/golden_2026BD.json
+    datasets:
+    - /ParkingDoubleMuonLowMass0/Run2026B-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2026B-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2026B-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2026B-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2026B-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2026B-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2026B-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2026B-PromptReco-v1/MINIAOD
+  data_Run2026D:
+    isMC: false
+    mode: ele
+    globaltag: 160X_dataRun3_Prompt_v1
+    lumimask: /uscms_data/d3/sitianq/bph_nano/CMSSW_16_0_9/src/PhysicsTools/BPHNano/production/golden/golden_2026BD.json
+    datasets:
+    - /ParkingDoubleMuonLowMass0/Run2026D-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass1/Run2026D-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass2/Run2026D-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass3/Run2026D-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass4/Run2026D-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass5/Run2026D-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass6/Run2026D-PromptReco-v1/MINIAOD
+    - /ParkingDoubleMuonLowMass7/Run2026D-PromptReco-v1/MINIAOD

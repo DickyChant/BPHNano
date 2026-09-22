@@ -36,6 +36,10 @@ EtaPrimeToMuMuGamma = cms.EDProducer(
     photonSelection = cms.string('pt > 0.2 && abs(eta) < 2.5'),
     preSelection    = cms.string('mass > %.2f && mass < %.2f' % (ETAP_MASS_MIN, ETAP_MASS_MAX)),
     postSelection   = cms.string(''),
+    # 'skip'  : a missing photon collection yields no candidates for that event (default)
+    # 'throw' : fail the job instead -- for auditing whether a dataset is affected
+    # Either way EtaPrimeToMuMuGammaInput_photonsPresent records it per event.
+    missingPhotons  = cms.string('skip'),
 )
 
 EtaPrimeToMuMuGammaTable = cms.EDProducer(
