@@ -40,10 +40,11 @@ def parse_args():
                    help='override the per-sample mode (default: use sample value, else 4l)')
     p.add_argument('--maxevents', type=int, default=-1)
     p.add_argument('--numcores', type=int, default=1, help='cores/threads per job (CRAB numCores + pset nThreads)')
-    p.add_argument('--maxmemory', type=int, default=3500,
-                   help='per-job memory cap MB. Measured on ep_2026Sep08: median 1935, p90 2612, '
-                        'worst 4158 -- do NOT inflate this, an oversized request is what got '
-                        '54%% of that campaign idle-killed')
+    p.add_argument('--maxmemory', type=int, default=3000,
+                   help='per-job memory cap MB. 3000 is the CRAB MAXIMUM for a 1-core job (the '
+                        'client rejects more). Measured: ep_2026Sep08 median 1935, p90 2612, '
+                        'worst 4158; the 2mu2e+mumugamma config peaks at 1.7 GB. Do NOT inflate '
+                        'this -- an 8000 MB request is what got 54%% of ep_2026Sep08 idle-killed')
     p.add_argument('--maxruntime', type=int, default=1400,
                    help='per-job wall-clock cap in MINUTES (CRAB maxJobRuntimeMin)')
     p.add_argument('--unitsperjob', type=int, default=None,
