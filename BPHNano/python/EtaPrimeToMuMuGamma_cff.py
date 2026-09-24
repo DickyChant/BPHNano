@@ -43,15 +43,13 @@ EtaPrimeToMuMuGamma = cms.EDProducer(
     # 3-body fit (Kirill Ivanov's recipe): the dimuon's l1_idx/l2_idx index muonBPH:AllMuons, and
     # AllTransientMuons is index-aligned with it
     muonTransientTracks = cms.InputTag('muonBPH', 'AllTransientMuons'),
-    # OniaPhotonConversionProducer flag bits to REJECT: 16 = the photon pairs with another PF
-    # photon inside the wide pi0 window (110-160 MeV) -- Kirill's pi0 veto. 0 disables it.
-    photonVetoFlags = cms.int32(16),
     # The conversion pair becomes ONE photon particle before the 3-body fit, in two ways stored
     # side by side: the fit CMS conversion reconstruction runs (vertex + PhiTheta colinearity;
     # 99.8% efficient, reproduces the stored conversion) -> fitted_mass, svprob, ...; and, if
-    # kirillFit, Kirill's plain 2-track vertex fit + zero-mass constraint (fails for ~41% of
-    # conversions: the tracks are tangent at the vertex) -> *_kirill.
-    kirillFit = cms.bool(True),
+    # fourBodyFit, Kirill's own photon fit: plain 2-track vertex fit + zero-mass constraint
+    # (fails for ~41% of conversions: the tracks are tangent at the vertex) -> *_4body.
+    # No pi0 veto here: it is an analysis cut on gamma_flags, never a production one.
+    fourBodyFit = cms.bool(True),
     # = RecoEgamma/EgammaPhotonProducers/python/allConversions_cfi.py (the colinearity fit)
     conversionFitParameters = cms.PSet(
         maxDelta            = cms.double(0.01),
@@ -76,13 +74,13 @@ EtaPrimeToMuMuGammaTable = cms.EDProducer(
         # 1 GeV -- a comb that aliases against any binning. Overridden to full precision; it must
         # be done INSIDE a clone (a PSet refuses a second 'mass' after CandVars is merged in).
         CandVars.clone(mass = Var("mass", float, precision=-1, doc="mu mu + photon 4-vector sum (no vertex fit)")),
-        # --- the same 3-body fit with Kirill's own conversion fit (kirillFit; status -9 = off) ---
-        sv_ok_kirill          = uint('sv_ok_kirill'),
-        fitted_mass_kirill    = ufloat('fitted_mass_kirill', doc="3-body fit mass, Kirill's conversion fit; -1 if a fit failed"),
-        fitted_massErr_kirill = ufloat('fitted_massErr_kirill'),
-        svprob_kirill         = ufloat('svprob_kirill'),
-        gamma_fit_status_kirill = uint('gamma_fit_status_kirill', doc="as gamma_fit_status, Kirill's conversion fit; -9 = not run"),
-        gamma_fit_prob_kirill   = ufloat('gamma_fit_prob_kirill'),
+        # --- 4body: the same fit with Kirill's own photon fit (fourBodyFit; status -9 = off) ---
+        sv_ok_4body          = uint('sv_ok_4body'),
+        fitted_mass_4body    = ufloat('fitted_mass_4body', doc="mass with Kirill's photon fit (2-track vertex + zero-mass); -1 if a fit failed"),
+        fitted_massErr_4body = ufloat('fitted_massErr_4body'),
+        svprob_4body         = ufloat('svprob_4body'),
+        gamma_fit_status_4body = uint('gamma_fit_status_4body', doc="as gamma_fit_status, Kirill's photon fit; -9 = not run"),
+        gamma_fit_prob_4body   = ufloat('gamma_fit_prob_4body'),
         # --- 3-body fit: mu+ mu- and the conversion photon (colinearity-constrained fit) ---
         sv_ok          = uint('sv_ok'),
         fitted_mass    = ufloat('fitted_mass', doc="3-body fit mass; -1 if the fit failed"),
@@ -92,9 +90,9 @@ EtaPrimeToMuMuGammaTable = cms.EDProducer(
         fitted_eta     = ufloat('fitted_eta'),
         fitted_phi     = ufloat('fitted_phi'),
         vtx_x = ufloat('vtx_x'), vtx_y = ufloat('vtx_y'), vtx_z = ufloat('vtx_z'),
-        gamma_flags     = uint('gamma_flags'),
+        gamma_flags     = uint('gamma_flags', doc="OniaPhotonConversionProducer flags; pi0 veto (analysis level) = (gamma_flags & 16) == 0"),
         gamma_fit_status = uint('gamma_fit_status', doc="conversion fit: 1 ok; 0 no tracks, -1 bad transient track, "
-                                "-2/-3/-4 ee vertex fit threw/invalid/chi2<0, -5/-6 zero-mass constraint threw/invalid (Kirill's fit only)"),
+                                "-2/-3/-4 ee vertex fit threw/invalid/chi2<0, -5/-6 zero-mass constraint threw/invalid (4body fit only)"),
         gamma_fit_prob  = ufloat('gamma_fit_prob', doc="conversion 2-track vertex fit prob (colinearity-constrained)"),
         gamma_fit_vtx_r = ufloat('gamma_fit_vtx_r'),
         gamma_fit_vtx_z = ufloat('gamma_fit_vtx_z'),

@@ -25,7 +25,6 @@ options.register('mumugamma', 1, VarParsing.multiplicity.singleton, VarParsing.v
 options.register('missingPhotons', 'skip', VarParsing.multiplicity.singleton, VarParsing.varType.string, "mu mu gamma when oniaPhotonCandidates is absent in an event: 'skip' or 'throw' (audit)")
 options.register('fourmu', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int, "1: add the eta -> 4mu reference channel (EtaTo4Mu table, in the skim OR)")
 options.register('mumupipi', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int, "1: add the eta' -> pi+pi- mu+mu- reference channel (EtaTo2L2Pi table, in the skim OR)")
-options.register('photonVetoFlags', 16, VarParsing.multiplicity.singleton, VarParsing.varType.int, "mu mu gamma: reject photons with these conversion flag bits (16 = wide pi0 window); 0 = no veto")
 options.register('nThreads', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int, "cmsRun threads/streams (set = CRAB JobType.numCores)")
 options.setDefault('maxEvents', -1)
 options.parseArguments()
@@ -80,7 +79,6 @@ _refs = [r for r, on in (('4mu', options.fourmu), ('2mu2pi', options.mumupipi)) 
 process = nanoAOD_customizeEtaPrime2Mu2E(process, options.isMC, variant=options.variant, refs=_refs)
 if hasattr(process, 'EtaPrimeToMuMuGamma'):
     process.EtaPrimeToMuMuGamma.missingPhotons = cms.string(options.missingPhotons)
-    process.EtaPrimeToMuMuGamma.photonVetoFlags = cms.int32(options.photonVetoFlags)
     if not options.mumugamma:
         # remove the builder and its table from the sequence; the skim below skips it too
         process.nanoSequence.remove(process.EtaPrimeToMuMuGamma)

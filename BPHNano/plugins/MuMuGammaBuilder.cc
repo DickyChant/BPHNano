@@ -76,8 +76,7 @@ public:
     throw_on_missing_{parse_policy(cfg.getParameter<std::string>("missingPhotons"))},
     muon_ttracks_{consumes<std::vector<reco::TransientTrack>>(cfg.getParameter<edm::InputTag>("muonTransientTracks"))},
     ttb_token_{esConsumes<TransientTrackBuilder, TransientTrackRecord>(edm::ESInputTag("", "TransientTrackBuilder"))},
-    veto_flags_{cfg.getParameter<int>("photonVetoFlags")},
-    kirill_{cfg.getParameter<bool>("kirillFit")},
+    four_body_{cfg.getParameter<bool>("fourBodyFit")},
     conversion_fit_pset_{cfg.getParameter<edm::ParameterSet>("conversionFitParameters")}
   {
     produces<pat::CompositeCandidateCollection>();
@@ -107,8 +106,7 @@ private:
   // 3-body fit (Kirill Ivanov's BsToJpsiGamma recipe, see produce())
   const edm::EDGetTokenT<std::vector<reco::TransientTrack>> muon_ttracks_;
   const edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> ttb_token_;
-  const int veto_flags_;
-  const bool kirill_;   // also run Kirill's own conversion fit, stored as *_kirill
+  const bool four_body_;   // also run Kirill's own photon fit, stored as *_4body
   const edm::ParameterSet conversion_fit_pset_;
 };
 
@@ -143,7 +141,7 @@ struct PhotonFit {
   RefCountedKinematicTree tree;             // keeps the particle's tree alive with it
   // 1 = fitted; otherwise the stage that failed: 0 conversion tracks missing, -1 transient
   // track invalid, -2 ee vertex fit threw, -3 ee vertex fit invalid, -4 ee vertex chi2 < 0,
-  // -5 zero-mass constraint threw, -6 zero-mass constraint invalid (-5/-6: Kirill's fit only)
+  // -5 zero-mass constraint threw, -6 zero-mass constraint invalid (-5/-6: the 4body fit only)
   int status = 0;
   float prob = -1.f, vx = 0.f, vy = 0.f, vz = 0.f, pt = -1.f, eta = 0.f, phi = 0.f;
   math::XYZTLorentzVector trk0, trk1;       // for the muon-overlap check
@@ -209,7 +207,7 @@ void MuMuGammaBuilder::produce(edm::StreamID, edm::Event &evt, edm::EventSetup c
   //     pair momentum. The pair comes out at ~2 m_e, so no zero-mass step follows: forcing
   //     that tightly constrained mass to 0 drags the momentum through the covariance (a
   //     median 0.5 rad off in the test), and a 1 MeV photon mass moves m(mu mu gamma) ~1 keV.
-  //  Kirill's own (*_kirill, if kirillFit): a plain 2-track vertex fit followed by a
+  //  4body (*_4body, if fourBodyFit): Kirill's own photon fit, a plain 2-track vertex fit then a
   //     zero-mass constraint. It fails for ~41% of the conversions (82% beyond r = 20 cm):
   //     the sequential fitter does not converge on two tracks tangent at the vertex.
   // His J/psi mass constraint on the dimuon is deliberately NOT ported: here m(mumu) is the
@@ -273,7 +271,7 @@ void MuMuGammaBuilder::produce(edm::StreamID, edm::Event &evt, edm::EventSetup c
     f.status = 1;
     f.ok = true;
   };
-  std::vector<PhotonFit> gcol(photons->size()), gkir(photons->size());
+  std::vector<PhotonFit> gcol(photons->size()), g4b(photons->size());
   std::vector<char> gfitted(photons->size(), 0);
   auto photon_fits = [&](size_t g) {
     if (!gfitted[g]) {
@@ -282,7 +280,7 @@ void MuMuGammaBuilder::produce(edm::StreamID, edm::Event &evt, edm::EventSetup c
       const reco::Track* t1 = (*photons)[g].userData<reco::Track>("track1");
       if (t0 && t1) {
         fit_photon(*t0, *t1, true, gcol[g]);
-        if (kirill_) fit_photon(*t0, *t1, false, gkir[g]);
+        if (four_body_) fit_photon(*t0, *t1, false, g4b[g]);
       }
     }
   };
@@ -382,11 +380,11 @@ void MuMuGammaBuilder::produce(edm::StreamID, edm::Event &evt, edm::EventSetup c
 
       if (!pre_sel_(cand)) continue;
 
-      // pi0 veto (Kirill): OniaPhotonConversionProducer flag bit 16 = this photon pairs with
-      // another PF photon inside the wide pi0 window (110-160 MeV). Configurable as a mask.
-      const int flags = g_ptr->hasUserInt("flags") ? g_ptr->userInt("flags") : 0;
-      cand.addUserInt("gamma_flags", flags);
-      if (veto_flags_ && (flags & veto_flags_)) continue;
+      // OniaPhotonConversionProducer flags, stored for the analysis. Bit 16 = the photon pairs
+      // with another PF photon inside the wide pi0 window (110-160 MeV). The pi0 veto is an
+      // ANALYSIS cut, (gamma_flags & 16) == 0, and is never applied here: on 2025D it costs 19%
+      // of the eta -> mu mu gamma signal for no gain in S/sqrt(B).
+      cand.addUserInt("gamma_flags", g_ptr->hasUserInt("flags") ? g_ptr->userInt("flags") : 0);
 
       // Stored, never required, so the fit efficiencies stay measurable; the fitted values
       // are -1 when a fit fails.
@@ -408,15 +406,15 @@ void MuMuGammaBuilder::produce(edm::StreamID, edm::Event &evt, edm::EventSetup c
       cand.addUserFloat("vtx_x", b.x);
       cand.addUserFloat("vtx_y", b.y);
       cand.addUserFloat("vtx_z", b.z);
-      // Kirill's own conversion fit, in parallel (status -9: kirillFit off, nothing run)
-      const PhotonFit& kf = gkir[g_idx];
-      const ThreeBodyFit k = fit_3body(i1, i2, kf);
-      cand.addUserInt("gamma_fit_status_kirill", kirill_ ? kf.status : -9);
-      cand.addUserFloat("gamma_fit_prob_kirill", kf.prob);
-      cand.addUserInt("sv_ok_kirill", k.ok);
-      cand.addUserFloat("fitted_mass_kirill", k.mass);
-      cand.addUserFloat("fitted_massErr_kirill", k.massErr);
-      cand.addUserFloat("svprob_kirill", k.prob);
+      // 4body: the same with Kirill's own photon fit, in parallel (status -9: fourBodyFit off)
+      const PhotonFit& f4 = g4b[g_idx];
+      const ThreeBodyFit b4 = fit_3body(i1, i2, f4);
+      cand.addUserInt("gamma_fit_status_4body", four_body_ ? f4.status : -9);
+      cand.addUserFloat("gamma_fit_prob_4body", f4.prob);
+      cand.addUserInt("sv_ok_4body", b4.ok);
+      cand.addUserFloat("fitted_mass_4body", b4.mass);
+      cand.addUserFloat("fitted_massErr_4body", b4.massErr);
+      cand.addUserFloat("svprob_4body", b4.prob);
 
       if (!post_sel_(cand)) continue;
       ret->push_back(cand);
