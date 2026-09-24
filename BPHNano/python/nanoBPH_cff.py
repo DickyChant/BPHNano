@@ -45,6 +45,8 @@ from PhysicsTools.BPHNano.EtaCTo4Mu_cff import *
 from PhysicsTools.BPHNano.MuMuPhi_cff import *
 from PhysicsTools.BPHNano.lowPtEleTracks_cff import *
 from PhysicsTools.BPHNano.EtaPrimeToMuMuGamma_cff import *   # mu mu + converted photon   # LowPtElectron e-legs for 2mu2e
+from PhysicsTools.BPHNano.EtaPrimeReferences_cff import *     # 4mu + 2mu2pi reference channels
+from PhysicsTools.BPHNano.common_cff import full_precision_p4
 from PhysicsTools.BPHNano.ZToLLV_cff import *            # Z -> ll V (V=phi->KK / rho->pipi)
 from PhysicsTools.BPHNano.LambdabToLambdahhBuilder import *
 from PhysicsTools.BPHNano.BDKstar_cff import *
@@ -260,7 +262,7 @@ def nanoAOD_customizeEtaC4Mu(process, isMC):
     return process
 
 
-def nanoAOD_customizeEtaPrime2Mu2E(process, isMC, variant='both'):
+def nanoAOD_customizeEtaPrime2Mu2E(process, isMC, variant='both', refs=()):
     """eta(548)/eta'(958) -> mu+mu- e+e-, with up to THREE e-leg variants on the same events.
 
     variant:
@@ -278,6 +280,11 @@ def nanoAOD_customizeEtaPrime2Mu2E(process, isMC, variant='both'):
     The generic-track e-leg variant has been removed, so tracksBPH (a TrackMerger over every
     packedPFCandidate + lostTrack) is no longer scheduled here at all -- it was the expensive
     part and the only consumer is gone.
+
+    refs: reference channels on the same events (EtaPrimeReferences_cff), any of
+      '4mu'    : eta -> 4mu                    -> EtaTo4Mu table
+      '2mu2pi' : eta' -> pi+pi- mu+mu-          -> EtaTo2L2Pi table (runs its own pT > 1 GeV
+                 track merger, etapPionTracks; no track table is stored)
     """
     _need_lowpt = variant in ('lowpt', 'all')
     _need_ele   = variant in ('ele', 'all')
@@ -286,6 +293,10 @@ def nanoAOD_customizeEtaPrime2Mu2E(process, isMC, variant='both'):
     _need_gamma = variant in ('ele', 'all', 'gamma')
     if not (_need_lowpt or _need_ele or _need_gamma):
         raise ValueError("nanoAOD_customizeEtaPrime2Mu2E: unknown variant %r" % variant)
+    _refs = set(refs)
+    if _refs - {'4mu', '2mu2pi'}:
+        raise ValueError("nanoAOD_customizeEtaPrime2Mu2E: unknown reference channel(s) %r"
+                         % sorted(_refs - {'4mu', '2mu2pi'}))
 
     # tracksBPH (TrackMerger over every packedPFCandidate+lostTrack) is EXPENSIVE and is only
     # needed by the generic-track variant -> only schedule it when that variant is requested.
@@ -300,6 +311,12 @@ def nanoAOD_customizeEtaPrime2Mu2E(process, isMC, variant='both'):
     if _need_gamma:
         seq += EtaPrimeToMuMuGamma
         tab += EtaPrimeToMuMuGammaTable
+    if '4mu' in _refs:
+        seq += EtaPrimeTo4Mu
+        tab += EtaPrimeTo4MuTable
+    if '2mu2pi' in _refs:
+        seq += etapPionTracks + EtaPrimeTo2Mu2Pi
+        tab += EtaPrimeTo2Mu2PiTable
 
     process.nanoSequence = cms.Sequence(process.nanoSequence
         + (muonBPHSequenceMC + muonBPHTablesMC if isMC else muonBPHSequence + muonBPHTables)
@@ -316,6 +333,10 @@ def nanoAOD_customizeEtaPrime2Mu2E(process, isMC, variant='both'):
         if _need_ele:
             process.nanoSequence += cms.Sequence(EtaPrimeTo2Mu2EEleBPHMCMatch
                                                  + EtaPrimeTo2Mu2EEleBPHMCTable)
+        if '4mu' in _refs:
+            process.nanoSequence += cms.Sequence(EtaPrimeTo4MuBPHMCMatch + EtaPrimeTo4MuBPHMCTable)
+        if '2mu2pi' in _refs:
+            process.nanoSequence += cms.Sequence(EtaPrimeTo2Mu2PiBPHMCMatch + EtaPrimeTo2Mu2PiBPHMCTable)
 
     # finalLowPtElectrons / finalElectrons and their tables live in cms.Tasks -> associate them
     # so the framework runs them for a scheduled consumer (same reason as customizeUpsilon4L).
@@ -328,6 +349,10 @@ def nanoAOD_customizeEtaPrime2Mu2E(process, isMC, variant='both'):
         # heavy central Electron table (and its jet dependency) is not needed.
         lowPtElectronTable.src = cms.InputTag("finalLowPtElectrons")
         process.nanoSequence.associate(lowPtElectronTask, lowPtElectronTablesTask)
+    # full-precision eta/phi/mass on the lepton tables too: few-MeV pair masses (conversions,
+    # Dalitz pairs) and small dR are rebuilt offline from the legs
+    full_precision_p4(muonBPHTable)
+    full_precision_p4(lowPtElectronTable)
     pVertexTable.slim = cms.bool(True)
     return process
 

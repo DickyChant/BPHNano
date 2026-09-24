@@ -118,6 +118,8 @@ EtaPrimeTo2Mu2EEleTable = UpsilonTo2Mu2ETable.clone(
                       "charge==0 is signal, |charge|==2 the same-sign control."),
 )
 
+full_precision_p4(EtaPrimeTo2Mu2ELowPtTable)
+full_precision_p4(EtaPrimeTo2Mu2EEleTable)
 
 ########################### MC matching ###########################
 # 331 = eta'(958). mcStatus covers both conventions seen in this package

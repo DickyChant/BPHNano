@@ -23,6 +23,9 @@ options.register('variant', 'ele', VarParsing.multiplicity.singleton, VarParsing
 options.register('wideWindow', 0, VarParsing.multiplicity.singleton, VarParsing.varType.int, "diagnostic: open the mass window (0.3-3.0) + drop post-fit mass cut")
 options.register('mumugamma', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int, "1: build + skim on the mu mu gamma normalisation channel; 0: drop it entirely")
 options.register('missingPhotons', 'skip', VarParsing.multiplicity.singleton, VarParsing.varType.string, "mu mu gamma when oniaPhotonCandidates is absent in an event: 'skip' or 'throw' (audit)")
+options.register('fourmu', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int, "1: add the eta -> 4mu reference channel (EtaTo4Mu table, in the skim OR)")
+options.register('mumupipi', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int, "1: add the eta' -> pi+pi- mu+mu- reference channel (EtaTo2L2Pi table, in the skim OR)")
+options.register('photonVetoFlags', 16, VarParsing.multiplicity.singleton, VarParsing.varType.int, "mu mu gamma: reject photons with these conversion flag bits (16 = wide pi0 window); 0 = no veto")
 options.register('nThreads', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int, "cmsRun threads/streams (set = CRAB JobType.numCores)")
 options.setDefault('maxEvents', -1)
 options.parseArguments()
@@ -73,9 +76,11 @@ process.NANOAODoutput = cms.OutputModule("NanoAODOutputModule",
 from PhysicsTools.BPHNano.nanoBPH_cff import nanoAOD_customizeMC, nanoAOD_customizeEtaPrime2Mu2E
 if options.isMC:
     process = nanoAOD_customizeMC(process)
-process = nanoAOD_customizeEtaPrime2Mu2E(process, options.isMC, variant=options.variant)
+_refs = [r for r, on in (('4mu', options.fourmu), ('2mu2pi', options.mumupipi)) if on]
+process = nanoAOD_customizeEtaPrime2Mu2E(process, options.isMC, variant=options.variant, refs=_refs)
 if hasattr(process, 'EtaPrimeToMuMuGamma'):
     process.EtaPrimeToMuMuGamma.missingPhotons = cms.string(options.missingPhotons)
+    process.EtaPrimeToMuMuGamma.photonVetoFlags = cms.int32(options.photonVetoFlags)
     if not options.mumugamma:
         # remove the builder and its table from the sequence; the skim below skips it too
         process.nanoSequence.remove(process.EtaPrimeToMuMuGamma)
@@ -104,6 +109,11 @@ if options.variant in ('ele', 'all'):           _counts.append(('EtaPrimeTo2Mu2E
 if options.mumugamma and options.variant in ('ele', 'all', 'gamma'):
     import PhysicsTools.BPHNano.EtaPrimeToMuMuGamma_cff as eg
     _counts.append(('EtaPrimeToMuMuGamma', eg.CountEtaPrimeToMuMuGamma))
+
+# reference channels: in the skim OR in their own right, like mu mu gamma
+import PhysicsTools.BPHNano.EtaPrimeReferences_cff as er
+if '4mu' in _refs:    _counts.append(('EtaPrimeTo4Mu',    er.CountEtaPrimeTo4Mu))
+if '2mu2pi' in _refs: _counts.append(('EtaPrimeTo2Mu2Pi', er.CountEtaPrimeTo2Mu2Pi))
 
 process.NANOAODoutput_step = cms.EndPath(process.NANOAODoutput)
 if options.skim:
