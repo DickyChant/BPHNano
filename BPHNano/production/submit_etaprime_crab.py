@@ -54,6 +54,14 @@ def parse_args():
     p.add_argument('--noskim', action='store_true', help='disable the >=1-candidate skim (default: skim on)')
     p.add_argument('-t', '--tag', default=PROD_TAG, help='campaign tag (in requestName + workArea); keep distinct from other live submissions')
     p.add_argument('--test', action='store_true', help='cap each task to 10 units')
+    # Resubmitting tasks that never start: some datasets sit only on T1 disk/tape (e.g. 2024F/G
+    # MINIv6 at FNAL/KIT) where analysis slots are scarce, so CRAB leaves the jobs idle for days.
+    # --ignorelocality runs them at the --whitelist sites and reads the input over xrootd.
+    p.add_argument('--datasets', default=None, help='file of dataset names (one per line): submit only these')
+    p.add_argument('--ignorelocality', action='store_true', help='Data.ignoreLocality: run at --whitelist sites, read input over xrootd')
+    p.add_argument('--whitelist', default=None, help='comma-separated Site.whitelist')
+    p.add_argument('--blacklist', default=None, help='comma-separated Site.blacklist')
+    p.add_argument('--reqsuffix', default='', help='appended to each requestName (a killed task keeps its work-area dir, e.g. _aaa)')
     p.add_argument('--dry-run', action='store_true', help='print configs, do not submit (skips VERIFY check)')
     return p.parse_args()
 
@@ -109,6 +117,13 @@ def main():
         from CRABAPI.RawCommand import crabCommand
         from multiprocessing import Process
 
+    wanted = None
+    if args.datasets:
+        wanted = set(l.strip() for l in open(args.datasets) if l.strip() and not l.startswith('#'))
+    if args.ignorelocality and not args.whitelist:
+        print('--ignorelocality needs --whitelist (the sites to run at)')
+        return
+
     n_tasks = 0
     for sname, s in selected.items():
         datasets = s.get('datasets')
@@ -123,8 +138,10 @@ def main():
         mode = args.mode   # e-leg variant: ele|lowpt|all
 
         for ds in datasets:
+            if wanted is not None and ds not in wanted:
+                continue
             n_tasks += 1
-            req = request_name(ds, args.tag)
+            req = (request_name(ds, args.tag) + args.reqsuffix)[:100]
             pyCfgParams = ['isMC=%s' % isMC, 'variant=%s' % mode, 'globalTag=%s' % gt,
                            'skim=%d' % (0 if args.noskim else 1),
                            'reportEvery=1000', 'maxEvents=%s' % args.maxevents,
@@ -141,6 +158,9 @@ def main():
                 print('    split/cores= %s: %d %s, %d cores, %d MB'
                       % (args.splitting, splitting, _u, args.numcores, args.maxmemory))
                 print('    site/LFN   = %s  %s/%s' % (args.site, args.outputdir, args.workarea))
+                if args.ignorelocality or args.whitelist or args.blacklist:
+                    print('    locality   = ignoreLocality %s, whitelist %s, blacklist %s'
+                          % (args.ignorelocality, args.whitelist, args.blacklist))
                 continue
 
             c = config()
@@ -176,6 +196,12 @@ def main():
             if args.test:
                 c.Data.totalUnits = 10
             c.Site.storageSite = args.site
+            if args.ignorelocality:
+                c.Data.ignoreLocality = True
+            if args.whitelist:
+                c.Site.whitelist = args.whitelist.split(',')
+            if args.blacklist:
+                c.Site.blacklist = args.blacklist.split(',')
 
             print('Submitting %s' % req)
             # each submit in its own forked process: CRAB caches the imported pset in-process,
