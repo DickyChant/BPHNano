@@ -61,6 +61,7 @@ def parse_args():
     p.add_argument('--ignorelocality', action='store_true', help='Data.ignoreLocality: run at --whitelist sites, read input over xrootd')
     p.add_argument('--whitelist', default=None, help='comma-separated Site.whitelist')
     p.add_argument('--blacklist', default=None, help='comma-separated Site.blacklist')
+    p.add_argument('--lumimask', default=None, help='lumi mask overriding the sample list (recovery task: the unfinished lumis of the closed task)')
     p.add_argument('--reqsuffix', default='', help='appended to each requestName (a killed task keeps its work-area dir, e.g. _aaa)')
     p.add_argument('--dry-run', action='store_true', help='print configs, do not submit (skips VERIFY check)')
     return p.parse_args()
@@ -134,7 +135,7 @@ def main():
         dtype = 'mc' if isMC else 'data'
         gt = s.get('globaltag') or common.get(dtype, {}).get('globaltag')
         splitting = args.unitsperjob or common.get(dtype, {}).get('splitting', 20)
-        lumimask = s.get('lumimask') if not isMC else None
+        lumimask = args.lumimask or (s.get('lumimask') if not isMC else None)
         mode = args.mode   # e-leg variant: ele|lowpt|all
 
         for ds in datasets:
