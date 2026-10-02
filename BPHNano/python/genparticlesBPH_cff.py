@@ -10,7 +10,7 @@ finalGenParticlesBPH = finalGenParticles.clone(
   src = cms.InputTag("mergedGenParticles"),
   select = cms.vstring(
 	"drop *",
-        "keep++ (abs(pdgId) == 511 || abs(pdgId) == 521 || abs(pdgId)==531 || abs(pdgId)==221)",  #keep all B0(=511) and B+/-(521) + their daughters and granddaughters
+        "keep++ (abs(pdgId) == 511 || abs(pdgId) == 521 || abs(pdgId)==531 || abs(pdgId)==221 || abs(pdgId)==331)",  #keep all B0(=511), B+/-(521), Bs(531), eta(221), eta'(331) + their daughters and granddaughters
         "keep++ abs(pdgId) == 5122", #  keep full lambda_b0
    )
 )

@@ -122,13 +122,13 @@ full_precision_p4(EtaPrimeTo2Mu2ELowPtTable)
 full_precision_p4(EtaPrimeTo2Mu2EEleTable)
 
 ########################### MC matching ###########################
-# 331 = eta'(958). mcStatus covers both conventions seen in this package
+# 221 = eta, 331 = eta'(958): the builder runs on both. mcStatus covers both conventions seen in this package
 # (2 = shower/decayed, 22 = hard scattering); validate on MC before trusting.
 def _mc_match(src_tag, label):
     return cms.EDProducer("MCMatcher",
         src         = src_tag,
         matched     = cms.InputTag("finalGenParticlesBPH"),
-        mcPdgId     = cms.vint32(331),
+        mcPdgId     = cms.vint32(221, 331),
         checkCharge = cms.bool(False),
         mcStatus    = cms.vint32(2, 22),
         maxDeltaR   = cms.double(0.1),

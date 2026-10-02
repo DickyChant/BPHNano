@@ -68,7 +68,9 @@ EtaPrimeTo2Mu2PiTable = full_precision_p4(EtaTo2L2PiTable.clone(
                      "stored: use fit_trk{1,2}_*. Always neutral: the builder only pairs "
                      "opposite-sign pions and the dimuon is opposite-sign."),
 ))
-EtaPrimeTo2Mu2PiBPHMCMatch = EtaTo2L2PiBPHMCMatch.clone(src = EtaPrimeTo2Mu2PiTable.src)
+# Pythia-decayed eta/eta' carry status 2; 22 is the convention of the HepMC-injected samples.
+EtaPrimeTo2Mu2PiBPHMCMatch = EtaTo2L2PiBPHMCMatch.clone(src = EtaPrimeTo2Mu2PiTable.src,
+                                                        mcStatus = cms.vint32(2, 22))
 EtaPrimeTo2Mu2PiBPHMCTable = EtaTo2L2PiBPHMCTable.clone(
     recoObjects = EtaPrimeTo2Mu2PiTable.src,
     mcMap       = cms.InputTag('EtaPrimeTo2Mu2PiBPHMCMatch'),
