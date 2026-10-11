@@ -63,6 +63,7 @@ def parse_args():
     p.add_argument('--blacklist', default=None, help='comma-separated Site.blacklist')
     p.add_argument('--lumimask', default=None, help='lumi mask overriding the sample list (recovery task: the unfinished lumis of the closed task)')
     p.add_argument('--reqsuffix', default='', help='appended to each requestName (a killed task keeps its work-area dir, e.g. _aaa)')
+    p.add_argument('--cfgparams', default='', help='comma-separated extra cfg arguments appended to pyCfgParams, e.g. mumugamma=0,fourmu=0,mumupipi=0 (mu mu e e only)')
     p.add_argument('--dry-run', action='store_true', help='print configs, do not submit (skips VERIFY check)')
     return p.parse_args()
 
@@ -147,6 +148,7 @@ def main():
                            'skim=%d' % (0 if args.noskim else 1),
                            'reportEvery=1000', 'maxEvents=%s' % args.maxevents,
                            'nThreads=%d' % args.numcores]
+            pyCfgParams += [x for x in args.cfgparams.split(',') if x]
             # NanoAOD (EDM) output is auto-detected by CRAB; do NOT declare it in
             # JobType.outputFiles (declaring a name the job never writes fails stageout).
 
