@@ -20,6 +20,24 @@ lowPtEleTracks = cms.EDProducer(
     # different products) -- see LowPtEleMerger
     overlapDeltaR = cms.double(0.02),
     overlapRelPt  = cms.double(0.5),
+    # value maps of standard-electron MVAs recomputed in the job, keyed on electrons2; empty =
+    # not used (the *rc userFloats are then -999)
+    mvaRecomputedFall17   = cms.InputTag(""),
+    mvaRecomputedWinter22 = cms.InputTag(""),
+)
+
+# The standard-electron no-iso MVAs recomputed from slimmedElectrons in this release, exactly as
+# central NanoAOD does (electronMVAValueMapProducer), but only the two algorithms we use. Needed
+# because the values STORED in the MiniAOD depend on the processing: 10Dec2022 / 2022 PromptReco
+# carry no Winter22, and the 22Sep2023 stored Winter22 is unreliable for soft electrons.
+from RecoEgamma.ElectronIdentification.ElectronMVAValueMapProducer_cfi import electronMVAValueMapProducer as _eleMVA
+from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V2_cff import \
+    mvaEleID_Fall17_noIso_V2_producer_config as _f17
+from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_RunIIIWinter22_noIso_V1_cff import \
+    mvaEleID_RunIIIWinter22_noIso_V1_producer_config as _w22
+etapEleMVA = _eleMVA.clone(
+    src = cms.InputTag("slimmedElectrons"),
+    mvaConfigurations = cms.VPSet(_f17, _w22),
 )
 
 # The two electron collections are COMPLEMENTARY in pT, not redundant: finalElectrons cuts at
@@ -36,9 +54,11 @@ etapEleTracks = lowPtEleTracks.clone(
     # directly keeps the producer slim; the leg's quality variables are stamped by the merger.
     electrons2        = cms.InputTag("slimmedElectrons"),      # ele_src = 1
     electronSelection = cms.string("pt > 0.5 && abs(eta) < 2.5"),
+    mvaRecomputedFall17   = cms.InputTag("etapEleMVA", "ElectronMVAEstimatorRun2Fall17NoIsoV2Values"),
+    mvaRecomputedWinter22 = cms.InputTag("etapEleMVA", "ElectronMVAEstimatorRun2RunIIIWinter22NoIsoV1Values"),
 )
 
 lowPtEleTracksSequence   = cms.Sequence(lowPtEleTracks)
 lowPtEleTracksSequenceMC = cms.Sequence(lowPtEleTracks)
-etapEleTracksSequence    = cms.Sequence(etapEleTracks)
-etapEleTracksSequenceMC  = cms.Sequence(etapEleTracks)
+etapEleTracksSequence    = cms.Sequence(etapEleMVA + etapEleTracks)
+etapEleTracksSequenceMC  = cms.Sequence(etapEleMVA + etapEleTracks)

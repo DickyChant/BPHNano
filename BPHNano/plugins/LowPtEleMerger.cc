@@ -37,6 +37,15 @@
 //                                          it is looked up defensively and left at -999 if absent)
 //   {low,nominal}_{sieie,hoe,lost_hits,pass_conv_veto}   cut-based inputs for each reco
 //   nominal_{einvminuspinv,deta_seed,dphi_in,r9}         the rest of the cut-based ID inputs
+//   nominal_mva_noiso_{f17,w22}            the no-iso MVA of ONE named algorithm each (Fall17 V2,
+//                                          RunIIIWinter22 V1) as stored in the MiniAOD, -999 if absent
+//   nominal_mva_noiso_{f17,w22}rc          the same two recomputed in this job from the
+//                                          "mvaRecomputed*" value maps (-999 if not configured)
+//   nominal_{f17,w22}_wp{80,90}            the stored working-point flags of each (-1 if absent)
+// nominal_mva_noiso is the FIRST stored name found (Winter22, else Fall17), so its meaning changes
+// between MiniAOD processings; the explicit ones do not. The 22Sep2023 MiniAOD's stored Winter22
+// is unreliable for soft electrons (it disagrees with the recomputation for a band of electrons
+// that 2024+ processings do not show), hence the recomputed values.
 // Anything unavailable is -999 (floats) / -1 (ints) rather than throwing. Set the untracked
 // parameter dumpIdNames=True to print, once, every userFloat and electronID the input
 // collections actually carry -- the reliable way to discover era-specific names.
@@ -56,6 +65,7 @@
 #include "DataFormats/PatCandidates/interface/CompositeCandidate.h"
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/Common/interface/View.h"
+#include "DataFormats/Common/interface/ValueMap.h"
 #include "DataFormats/EgammaCandidates/interface/Conversion.h"
 #include "DataFormats/EgammaCandidates/interface/ConversionFwd.h"
 #include "DataFormats/Math/interface/deltaR.h"
@@ -90,7 +100,15 @@ public:
     ele_selection_(cfg.getParameter<std::string>("electronSelection")),
     nominal_pt_(cfg.getParameter<double>("nominalPtThreshold")),
     match_dr_(cfg.getParameter<double>("overlapDeltaR")),
-    match_dpt_(cfg.getParameter<double>("overlapRelPt"))
+    match_dpt_(cfg.getParameter<double>("overlapRelPt")),
+    mvaF17Tag_(cfg.existsAs<edm::InputTag>("mvaRecomputedFall17")
+                 ? cfg.getParameter<edm::InputTag>("mvaRecomputedFall17") : edm::InputTag()),
+    mvaW22Tag_(cfg.existsAs<edm::InputTag>("mvaRecomputedWinter22")
+                 ? cfg.getParameter<edm::InputTag>("mvaRecomputedWinter22") : edm::InputTag()),
+    mvaF17Token_(mvaF17Tag_.label().empty() ? edm::EDGetTokenT<edm::ValueMap<float>>()
+                                            : consumes<edm::ValueMap<float>>(mvaF17Tag_)),
+    mvaW22Token_(mvaW22Tag_.label().empty() ? edm::EDGetTokenT<edm::ValueMap<float>>()
+                                            : consumes<edm::ValueMap<float>>(mvaW22Tag_))
   {
     produces<pat::CompositeCandidateCollection>("SelectedElectrons");
     produces<TransientTrackCollection>("SelectedTransientElectrons");
@@ -114,6 +132,9 @@ private:
   const bool dump_id_names_;
   const StringCutObjectSelector<pat::Electron> ele_selection_;
   const double nominal_pt_, match_dr_, match_dpt_;
+  // value maps of MVAs recomputed in this job, keyed on "electrons2" (slimmedElectrons)
+  const edm::InputTag mvaF17Tag_, mvaW22Tag_;
+  const edm::EDGetTokenT<edm::ValueMap<float>> mvaF17Token_, mvaW22Token_;
 };
 
 namespace {
@@ -147,6 +168,10 @@ void LowPtEleMerger::produce(edm::StreamID, edm::Event &evt, edm::EventSetup con
   // (beam pipe ~2-3 cm, first pixel layers ~3-6 cm) from a prompt e+e- pair.
   edm::Handle<reco::ConversionCollection> conversions;
   evt.getByToken(convToken_, conversions);
+
+  edm::Handle<edm::ValueMap<float>> mvaF17, mvaW22;
+  if (!mvaF17Tag_.label().empty()) evt.getByToken(mvaF17Token_, mvaF17);
+  if (!mvaW22Tag_.label().empty()) evt.getByToken(mvaW22Token_, mvaW22);
 
   // ---- collect the two collections, then OR them into one list of physical electrons ----
   std::vector<Merged> merged;
@@ -326,6 +351,21 @@ void LowPtEleMerger::produce(edm::StreamID, edm::Event &evt, edm::EventSetup con
         {"mvaEleID-RunIIIWinter22-noIso-V1-wp80", "mvaEleID-Fall17-noIso-V2-wp80"}, -1.f));
     pcand.addUserInt("nominal_mva_noiso_wp90", (int)eid(ne,
         {"mvaEleID-RunIIIWinter22-noIso-V1-wp90", "mvaEleID-Fall17-noIso-V2-wp90"}, -1.f));
+
+    // The same, one named algorithm per branch, stored and recomputed. The value maps are keyed
+    // on electrons2, which is where every nominal reconstruction comes from.
+    auto recomputed = [&](const edm::Handle<edm::ValueMap<float>>& h) -> float {
+      if (!ne || !h.isValid() || !electrons2.isValid()) return -999.f;
+      return (*h)[electrons2->ptrAt(m.nom.idx)];
+    };
+    pcand.addUserFloat("nominal_mva_noiso_f17", eid(ne, {"ElectronMVAEstimatorRun2Fall17NoIsoV2Values"}, -999.f));
+    pcand.addUserFloat("nominal_mva_noiso_w22", eid(ne, {"ElectronMVAEstimatorRun2RunIIIWinter22NoIsoV1Values"}, -999.f));
+    pcand.addUserFloat("nominal_mva_noiso_f17rc", recomputed(mvaF17));
+    pcand.addUserFloat("nominal_mva_noiso_w22rc", recomputed(mvaW22));
+    pcand.addUserInt("nominal_f17_wp80", (int)eid(ne, {"mvaEleID-Fall17-noIso-V2-wp80"}, -1.f));
+    pcand.addUserInt("nominal_f17_wp90", (int)eid(ne, {"mvaEleID-Fall17-noIso-V2-wp90"}, -1.f));
+    pcand.addUserInt("nominal_w22_wp80", (int)eid(ne, {"mvaEleID-RunIIIWinter22-noIso-V1-wp80"}, -1.f));
+    pcand.addUserInt("nominal_w22_wp90", (int)eid(ne, {"mvaEleID-RunIIIWinter22-noIso-V1-wp90"}, -1.f));
 
     // Cut-based ID packed as a level: 0 fails veto, 1 veto, 2 loose, 3 medium, 4 tight, -1 if
     // unavailable. CAVEAT: the standard cut-based WPs INCLUDE an isolation cut, and the VID

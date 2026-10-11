@@ -135,6 +135,23 @@ UpsilonTo2Mu2ETable = cms.EDProducer(
         trk2_nominal_mva_noiso_wp80 = uint('trk2_nominal_mva_noiso_wp80'),
         trk1_nominal_mva_noiso_wp90 = uint('trk1_nominal_mva_noiso_wp90'),
         trk2_nominal_mva_noiso_wp90 = uint('trk2_nominal_mva_noiso_wp90'),
+        # nominal_mva_noiso above is the first stored name found (Winter22, else Fall17 V2) and so
+        # changes meaning between MiniAOD processings. These are one algorithm each: as stored in
+        # the MiniAOD (-999 if that processing lacks it) and recomputed in the job (rc; -999 if the
+        # merger has no value maps). Use them, not nominal_mva_noiso. The 22Sep2023 stored Winter22
+        # is unreliable for soft electrons.
+        trk1_nominal_mva_noiso_f17 = ufloat('trk1_nominal_mva_noiso_f17'),
+        trk2_nominal_mva_noiso_f17 = ufloat('trk2_nominal_mva_noiso_f17'),
+        trk1_nominal_mva_noiso_w22 = ufloat('trk1_nominal_mva_noiso_w22'),
+        trk2_nominal_mva_noiso_w22 = ufloat('trk2_nominal_mva_noiso_w22'),
+        trk1_nominal_mva_noiso_f17rc = ufloat('trk1_nominal_mva_noiso_f17rc'),
+        trk2_nominal_mva_noiso_f17rc = ufloat('trk2_nominal_mva_noiso_f17rc'),
+        trk1_nominal_mva_noiso_w22rc = ufloat('trk1_nominal_mva_noiso_w22rc'),
+        trk2_nominal_mva_noiso_w22rc = ufloat('trk2_nominal_mva_noiso_w22rc'),
+        trk1_nominal_f17_wp80 = uint('trk1_nominal_f17_wp80'), trk2_nominal_f17_wp80 = uint('trk2_nominal_f17_wp80'),
+        trk1_nominal_f17_wp90 = uint('trk1_nominal_f17_wp90'), trk2_nominal_f17_wp90 = uint('trk2_nominal_f17_wp90'),
+        trk1_nominal_w22_wp80 = uint('trk1_nominal_w22_wp80'), trk2_nominal_w22_wp80 = uint('trk2_nominal_w22_wp80'),
+        trk1_nominal_w22_wp90 = uint('trk1_nominal_w22_wp90'), trk2_nominal_w22_wp90 = uint('trk2_nominal_w22_wp90'),
         # 0 fails veto, 1 veto, 2 loose, 3 medium, 4 tight, -1 no standard reco.
         # NOTE these WPs include an isolation cut; use mva_noiso for an iso-free selection.
         trk1_nominal_cutbased = uint('trk1_nominal_cutbased'),
