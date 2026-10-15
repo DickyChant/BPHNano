@@ -70,6 +70,7 @@
 #include "DataFormats/EgammaCandidates/interface/ConversionFwd.h"
 #include "DataFormats/Math/interface/deltaR.h"
 #include "CommonTools/Egamma/interface/ConversionTools.h"
+#include "DataFormats/BeamSpot/interface/BeamSpot.h"
 
 #include "MagneticField/Engine/interface/MagneticField.h"
 #include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
@@ -96,6 +97,8 @@ public:
     ele2Token_(use_ele2_ ? consumes<edm::View<pat::Electron>>(ele2Tag_)
                          : edm::EDGetTokenT<edm::View<pat::Electron>>()),
     convToken_(consumes<reco::ConversionCollection>(cfg.getParameter<edm::InputTag>("conversions"))),
+    bsToken_(consumes<reco::BeamSpot>(cfg.existsAs<edm::InputTag>("beamSpot")
+                                          ? cfg.getParameter<edm::InputTag>("beamSpot") : edm::InputTag("offlineBeamSpot"))),
     dump_id_names_(cfg.getUntrackedParameter<bool>("dumpIdNames", false)),
     ele_selection_(cfg.getParameter<std::string>("electronSelection")),
     nominal_pt_(cfg.getParameter<double>("nominalPtThreshold")),
@@ -129,6 +132,7 @@ private:
   const bool use_ele2_;
   const edm::EDGetTokenT<edm::View<pat::Electron>> ele2Token_;
   const edm::EDGetTokenT<reco::ConversionCollection> convToken_;
+  const edm::EDGetTokenT<reco::BeamSpot> bsToken_;
   const bool dump_id_names_;
   const StringCutObjectSelector<pat::Electron> ele_selection_;
   const double nominal_pt_, match_dr_, match_dpt_;
@@ -168,6 +172,8 @@ void LowPtEleMerger::produce(edm::StreamID, edm::Event &evt, edm::EventSetup con
   // (beam pipe ~2-3 cm, first pixel layers ~3-6 cm) from a prompt e+e- pair.
   edm::Handle<reco::ConversionCollection> conversions;
   evt.getByToken(convToken_, conversions);
+  edm::Handle<reco::BeamSpot> beamspot;
+  evt.getByToken(bsToken_, beamspot);
 
   edm::Handle<edm::ValueMap<float>> mvaF17, mvaW22;
   if (!mvaF17Tag_.label().empty()) evt.getByToken(mvaF17Token_, mvaF17);
@@ -301,6 +307,27 @@ void LowPtEleMerger::produce(edm::StreamID, edm::Event &evt, edm::EventSetup con
     pcand.addUserFloat("conv_dr", conv_matched ? best_dr : -1.f);
     pcand.addUserInt("conv_matched", conv_matched);
     pcand.addUserFloat("conv_r", conv_r);
+
+    // CMS-BPH-24-001's conversion tag, reproduced exactly: its ntuplizer (eta2mu2eSkimmer) calls
+    // ConversionTools::hasMatchedConversion / matchedConversion(slimmed pat::Electron,
+    // reducedEgamma:reducedConversions, offlineBeamSpot position) with the default arguments
+    // (lxyMin 2 cm from the beam spot, prob > 1e-6, no hits before the vertex); its signal
+    // requires no match on both legs, its reference both legs matched, with the conversion
+    // vertex vxy (from the origin, as it stores x, y) below a cut. Standard electrons only.
+    int   nom_conv_vid = -1;      // -1: no standard reconstruction (or no input)
+    float nom_conv_vid_vxy = -1.f, nom_conv_vid_lxy = -1.f;
+    if (m.nom.ok && m.nom.ele && conversions.isValid() && beamspot.isValid()) {
+      const reco::Conversion* mc = ConversionTools::matchedConversion(*m.nom.ele, *conversions, beamspot->position());
+      nom_conv_vid = mc ? 1 : 0;
+      if (mc) {
+        const auto& v = mc->conversionVertex().position();
+        nom_conv_vid_vxy = std::hypot(v.x(), v.y());
+        nom_conv_vid_lxy = std::hypot(v.x() - beamspot->position().x(), v.y() - beamspot->position().y());
+      }
+    }
+    pcand.addUserInt("nominal_conv_vid", nom_conv_vid);
+    pcand.addUserFloat("nominal_conv_vid_vxy", nom_conv_vid_vxy);
+    pcand.addUserFloat("nominal_conv_vid_lxy", nom_conv_vid_lxy);
 
     // Quality handles stamped straight off the pat::Electron. Needed because the standard legs
     // are read as slimmedElectrons, NOT via finalElectrons: the NanoAOD Electron table depends

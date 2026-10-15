@@ -179,6 +179,16 @@ UpsilonTo2Mu2ETable = cms.EDProducer(
         trk1_nominal_pass_conv_veto = uint('trk1_nominal_pass_conv_veto'),
         trk2_nominal_pass_conv_veto = uint('trk2_nominal_pass_conv_veto'),
         trk1_conv_dr = ufloat('trk1_conv_dr'), trk2_conv_dr = ufloat('trk2_conv_dr'),
+        # CMS-BPH-24-001's own conversion tag (ConversionTools::matchedConversion on the standard
+        # electron, reducedConversions, beam spot; CMSSW defaults): 1 matched, 0 not, -1 no standard
+        # reco; vxy = matched conversion vertex radius from the origin (what that analysis cuts),
+        # lxy = from the beam spot
+        trk1_nominal_conv_vid = Var("userInt('trk1_nominal_conv_vid')", int, doc="BPH-24-001 conversion match"),
+        trk2_nominal_conv_vid = Var("userInt('trk2_nominal_conv_vid')", int, doc="BPH-24-001 conversion match"),
+        trk1_nominal_conv_vid_vxy = ufloat('trk1_nominal_conv_vid_vxy'),
+        trk2_nominal_conv_vid_vxy = ufloat('trk2_nominal_conv_vid_vxy'),
+        trk1_nominal_conv_vid_lxy = ufloat('trk1_nominal_conv_vid_lxy'),
+        trk2_nominal_conv_vid_lxy = ufloat('trk2_nominal_conv_vid_lxy'),
         trk1_conv_r = ufloat('trk1_conv_r'),
         trk2_conv_r = ufloat('trk2_conv_r'),
         # dedicated two-track e+e- vertex: radius separates a converted photon (beam pipe

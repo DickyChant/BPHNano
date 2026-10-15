@@ -201,7 +201,8 @@ void UpsilonTo2Mu2EBuilder::produce(edm::StreamID, edm::Event &evt, edm::EventSe
                               "nominal_mva_noiso_f17", "nominal_mva_noiso_w22",
                               "nominal_mva_noiso_f17rc", "nominal_mva_noiso_w22rc",
                               "nominal_einvminuspinv", "nominal_deta_seed",
-                              "nominal_dphi_in", "nominal_r9"}) {
+                              "nominal_dphi_in", "nominal_r9",
+                              "nominal_conv_vid_vxy", "nominal_conv_vid_lxy"}) {
           cand.addUserFloat(std::string("trk1_") + v, trk1_ptr->hasUserFloat(v) ? trk1_ptr->userFloat(v) : -999.f);
           cand.addUserFloat(std::string("trk2_") + v, trk2_ptr->hasUserFloat(v) ? trk2_ptr->userFloat(v) : -999.f);
         }
@@ -210,7 +211,7 @@ void UpsilonTo2Mu2EBuilder::produce(edm::StreamID, edm::Event &evt, edm::EventSe
                               "nominal_mva_noiso_wp80", "nominal_mva_noiso_wp90",
                               "nominal_f17_wp80", "nominal_f17_wp90",
                               "nominal_w22_wp80", "nominal_w22_wp90",
-                              "nominal_cutbased"}) {
+                              "nominal_cutbased", "nominal_conv_vid"}) {
           cand.addUserInt(std::string("trk1_") + v, trk1_ptr->hasUserInt(v) ? trk1_ptr->userInt(v) : -1);
           cand.addUserInt(std::string("trk2_") + v, trk2_ptr->hasUserInt(v) ? trk2_ptr->userInt(v) : -1);
         }
