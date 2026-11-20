@@ -18,7 +18,13 @@ def Defaultsamples(isMC):
 
 options = VarParsing('python')
 
-options.register('globalTag', '130X_dataRun3_Prompt_v3', 
+options.register('era', 'Run3_2026',
+    VarParsing.multiplicity.singleton,
+    VarParsing.varType.string,
+    "cms.Process era name from Configuration.StandardSequences.Eras (e.g. Run3, Run3_2024, Run3_2026)"
+)
+
+options.register('globalTag', '', 
     VarParsing.multiplicity.singleton,
     VarParsing.varType.string,
     "Global tag"
@@ -73,6 +79,8 @@ if 'reportEvery' in globals():
     options.reportEvery = globals()['reportEvery']
 if 'tag' in globals():
     options.tag = globals()['tag']
+if 'era' in globals():
+    options.era = globals()['era']
 if 'globalTag' in globals():
     options.globalTag = globals()['globalTag']
 if 'decay' in globals():
@@ -96,11 +104,12 @@ else:
     print(options)
     print("/////////////////////////////////////////////////////////////////////////")
 
-# Use provided globalTag if specified, otherwise use defaults
-if options.globalTag == '130X_dataRun3_Prompt_v3':  # Default value
-    globaltag = '124X_mcRun3_2022_realistic_v11' if options.isMC else '130X_dataRun3_Prompt_v3'
-else:
+# Use provided globalTag if specified, otherwise 2026 defaults (CMSSW_16_0_X):
+# data = 2026 PromptReco GT; MC = autoCond realistic (override once 2026 low-PU MC GT is known)
+if options.globalTag:
     globaltag = options.globalTag
+else:
+    globaltag = 'auto:phase1_2025_realistic' if options.isMC else '160X_dataRun3_Prompt_v1'
 
 if options.isMC:
    options.tag+="_mc"
@@ -119,7 +128,8 @@ annotation = '%s nevts:%d' % (outputFileNANO, options.maxEvents)
 # Process
 from Configuration.StandardSequences.Eras import eras
 
-process = cms.Process('UENANO',eras.Run3)
+process = cms.Process('UENANO', getattr(eras, options.era))
+print("Era:", options.era, " GlobalTag:", globaltag)
 
 # import of standard configurations
 process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
@@ -230,4 +240,4 @@ process.load("TrackingTools/TransientTrack/TransientTrackBuilder_cfi")
 from Configuration.StandardSequences.earlyDeleteSettings_cff import customiseEarlyDelete
 process = customiseEarlyDelete(process)
 
-print(process.dumpPython())
+# (no process.dumpPython() here: it floods CRAB job logs)

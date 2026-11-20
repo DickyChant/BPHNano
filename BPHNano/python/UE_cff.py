@@ -13,7 +13,11 @@ tracksUE = cms.EDProducer(
     beamSpot        = cms.InputTag("offlineBeamSpot"),
     tracks          = cms.InputTag("packedPFCandidates"),
     lostTracks      = cms.InputTag("lostTracks"),
-    trackSelection  = cms.string("pt>0.5 && abs(eta)<2.5"),  # Standard UE cuts
+    # Slightly looser than the analysis cuts (pt>0.5, |eta|<2.5) to avoid edge migration between
+    # PackedCandidate::pt() and bestTrack()->pt(); final cuts applied offline.
+    trackSelection  = cms.string("pt>0.4 && abs(eta)<2.6"),
+    keepAllCharged  = cms.bool(True),   # keep e/mu/p too (instanton = all charged particles)
+    vertices        = cms.InputTag("offlineSlimmedPrimaryVertices"),
     muons           = cms.InputTag("slimmedMuons"),
     electrons       = cms.InputTag("slimmedElectrons"),
     maxDzDilep      = cms.double(-1.0),
@@ -47,6 +51,14 @@ trackUETable = cms.EDProducer(
         ptErr      = Var("userFloat('ptErr')", float, doc="Pt uncertainty"),
         normChi2   = Var("userFloat('normChi2')", float, doc="Track fit chi-squared divided by n.d.o.f."),
         nValidPixelHits = Var("userInt('nValidPixelHits')", int, doc="Number of pixel hits"),
+        pdgId      = Var("pdgId()", int, doc="PF candidate pdgId"),
+        dxyBS      = Var("userFloat('dxyBS')", float, doc="transverse DCA wrt beamspot [cm]"),
+        dxyPV0     = Var("userFloat('dxyPV0')", float, doc="dxy of bestTrack wrt PV[0] [cm]"),
+        dzPV0      = Var("userFloat('dzPV0')", float, doc="dz of bestTrack wrt PV[0] [cm]"),
+        hasPV0     = Var("userInt('hasPV0')", bool, doc="PV[0] existed (else dxyPV0/dzPV0 wrt beamspot)"),
+        fromPV     = Var("userInt('fromPV')", "uint8", doc="PackedCandidate::fromPV() wrt PV[0] (0..3)"),
+        pvAssocQuality = Var("userInt('pvAssocQuality')", "uint8", doc="PackedCandidate::pvAssociationQuality()"),
+        highPurity = Var("userInt('highPurity')", bool, doc="track is highPurity"),
         ),
 )
 
@@ -84,3 +96,23 @@ genParticleUETable = genParticleTable.clone(
 
 genParticleUESequence = cms.Sequence(finalGenParticles)
 genParticleUETables = cms.Sequence(genParticleUETable)
+
+# Particle-level truth for UE/instanton: all stable charged particles from packedGenParticles
+# (prunedGenParticles/finalGenParticles drops soft stable charged hadrons).
+packedGenChargedUETable = cms.EDProducer(
+    "SimpleCandidateFlatTableProducer",
+    src  = cms.InputTag("packedGenParticles"),
+    cut  = cms.string("status == 1 && charge != 0 && pt > 0.4 && abs(eta) < 2.6"),
+    name = cms.string("GenCharged"),
+    doc  = cms.string("stable charged gen particles (packedGenParticles) for UE/instanton truth"),
+    singleton = cms.bool(False),
+    extension = cms.bool(False),
+    variables = cms.PSet(
+        pt     = Var("pt", float, precision=12),
+        eta    = Var("eta", float, precision=12),
+        phi    = Var("phi", float, precision=12),
+        charge = Var("charge", int),
+        pdgId  = Var("pdgId", int),
+    ),
+)
+packedGenChargedUETables = cms.Sequence(packedGenChargedUETable)

@@ -18,6 +18,8 @@
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/GeometryVector/interface/GlobalPoint.h"
+#include "DataFormats/VertexReco/interface/Vertex.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
 
 #include "MagneticField/Engine/interface/MagneticField.h"
 #include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
@@ -41,8 +43,13 @@ public:
     eleToken_(consumes<pat::ElectronCollection>(cfg.getParameter<edm::InputTag>("electrons"))),
     maxDzDilep_(cfg.getParameter<double>("maxDzDilep")),
     dcaSig_(cfg.getParameter<double>("dcaSig")),
-    track_selection_(cfg.getParameter<std::string>("trackSelection"))
+    track_selection_(cfg.getParameter<std::string>("trackSelection")),
+    // UE / instanton-mode options (optional; defaults keep BPH behaviour unchanged)
+    keepAllCharged_(cfg.existsAs<bool>("keepAllCharged") ? cfg.getParameter<bool>("keepAllCharged") : false),
+    usePV_(cfg.existsAs<edm::InputTag>("vertices"))
   {
+    if (usePV_)
+      verticesToken_ = consumes<reco::VertexCollection>(cfg.getParameter<edm::InputTag>("vertices"));
     produces<pat::CompositeCandidateCollection>("SelectedTracks");
     produces<TransientTrackCollection>("SelectedTransientTracks");
     produces<edm::Association<pat::CompositeCandidateCollection>>("SelectedTracks");
@@ -68,6 +75,9 @@ private:
   const double maxDzDilep_;
   const double dcaSig_;
   const StringCutObjectSelector<pat::PackedCandidate> track_selection_;
+  const bool keepAllCharged_;
+  const bool usePV_;
+  edm::EDGetTokenT<reco::VertexCollection> verticesToken_;
 };
 
 
@@ -95,6 +105,18 @@ void TrackMerger::produce(edm::StreamID, edm::Event &evt, edm::EventSetup const 
   evt.getByToken(eleToken_, pfele);
 
 
+  // Leading PV (PV[0]) for explicit impact parameters; fall back to beam spot if absent
+  bool hasPV0 = false;
+  reco::Vertex::Point pv0Pos(beamSpot.x0(), beamSpot.y0(), beamSpot.z0());
+  if (usePV_) {
+    edm::Handle<reco::VertexCollection> vertices;
+    evt.getByToken(verticesToken_, vertices);
+    if (vertices.isValid() && !vertices->empty()) {
+      pv0Pos = vertices->front().position();
+      hasPV0 = true;
+    }
+  }
+
   //for lost tracks / pf discrimination
   unsigned int nTracks = tracks->size();
   unsigned int totalTracks = nTracks + lostTracks->size();
@@ -117,7 +139,9 @@ void TrackMerger::produce(edm::StreamID, edm::Event &evt, edm::EventSetup const 
     const pat::PackedCandidate & trk = (iTrk < nTracks) ? (*tracks)[iTrk] : (*lostTracks)[iTrk - nTracks];
     //arranging cuts for speed
     if (!trk.hasTrackDetails()) continue;
-    if (fabs(trk.pdgId()) != 211 && fabs(trk.pdgId()) != 321) continue; //do we want also to keep muons?
+    if (keepAllCharged_) {
+      if (trk.charge() == 0) continue;  // UE/instanton mode: keep e, mu, p, ... too
+    } else if (fabs(trk.pdgId()) != 211 && fabs(trk.pdgId()) != 321) continue;
     if ( !track_selection_(trk) ) continue;
 
     //bool skipTrack = true;
@@ -201,6 +225,14 @@ void TrackMerger::produce(edm::StreamID, edm::Event &evt, edm::EventSetup const 
     pcand.addUserFloat("dz", trk.dz());
     pcand.addUserFloat("dzS", trk.dz() / trk.dzError());
     pcand.addUserFloat("DCASig", DCASig);
+    pcand.addUserFloat("dxyBS", DCABS);
+    // dxy/dz wrt PV[0] (the no-arg versions are wrt the candidate's own associated vertex)
+    pcand.addUserFloat("dxyPV0", trk.bestTrack()->dxy(pv0Pos));
+    pcand.addUserFloat("dzPV0", trk.bestTrack()->dz(pv0Pos));
+    pcand.addUserInt("hasPV0", hasPV0);
+    pcand.addUserInt("fromPV", trk.fromPV());
+    pcand.addUserInt("pvAssocQuality", trk.pvAssociationQuality());
+    pcand.addUserInt("highPurity", trk.trackHighPurity());
     //pcand.addUserFloat("dzTrg", dzTrg);
     pcand.addUserInt("isMatchedToMuon", matchedToMuon);
     pcand.addUserInt("isMatchedToEle", matchedToEle);

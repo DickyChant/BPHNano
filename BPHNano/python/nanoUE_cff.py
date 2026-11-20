@@ -8,6 +8,7 @@ from PhysicsTools.NanoAOD.NanoAODEDMEventContent_cff import *
 
 ## UE-specific modules (no BPH dependencies)
 from PhysicsTools.BPHNano.UE_cff import *
+from PhysicsTools.BPHNano.pverticesBPH_cff import pVertexTable  # all PVs (PVtx_*) for merged-PV diagnostics
 
 vertexTable.svSrc = cms.InputTag("slimmedSecondaryVertices")
 
@@ -15,7 +16,8 @@ vertexTable.svSrc = cms.InputTag("slimmedSecondaryVertices")
 nanoSequenceUE = cms.Sequence(nanoMetadata + 
                               cms.Sequence(vertexTask) +
                               cms.Sequence(globalTablesTask) + 
-                              cms.Sequence(vertexTablesTask)
+                              cms.Sequence(vertexTablesTask) +
+                              pVertexTable
                            )
 
 def nanoAOD_customizeUE(process, isMC):
@@ -29,6 +31,8 @@ def nanoAOD_customizeUE(process, isMC):
         process.nanoSequenceUE = cms.Sequence( process.nanoSequenceUE + 
                                               genParticleUESequence + 
                                               genParticleUETables +
+                                              packedGenChargedUETables +
+                                              cms.Sequence(globalTablesMCTask) +   # Pileup_nPU/nTrueInt, genWeight
                                               tracksUESequenceMC + 
                                               tracksUETablesMC )
     else:
