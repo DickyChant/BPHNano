@@ -51,7 +51,6 @@ trackUETable = cms.EDProducer(
         ptErr      = Var("userFloat('ptErr')", float, doc="Pt uncertainty"),
         normChi2   = Var("userFloat('normChi2')", float, doc="Track fit chi-squared divided by n.d.o.f."),
         nValidPixelHits = Var("userInt('nValidPixelHits')", int, doc="Number of pixel hits"),
-        pdgId      = Var("pdgId()", int, doc="PF candidate pdgId"),
         dxyBS      = Var("userFloat('dxyBS')", float, doc="transverse DCA wrt beamspot [cm]"),
         dxyPV0     = Var("userFloat('dxyPV0')", float, doc="dxy of bestTrack wrt PV[0] [cm]"),
         dzPV0      = Var("userFloat('dzPV0')", float, doc="dz of bestTrack wrt PV[0] [cm]"),
