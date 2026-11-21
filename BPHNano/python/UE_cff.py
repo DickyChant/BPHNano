@@ -93,7 +93,8 @@ tracksUETablesMC   = cms.Sequence(trackUETable + tracksUEMCTable)
 
 # Gen particle table for UE studies (use standard genParticleTable)
 genParticleUETable = genParticleTable.clone(
-    src = cms.InputTag("finalGenParticles")
+    src = cms.InputTag("finalGenParticles"),
+    externalVariables = cms.PSet(),  # drop NanoAOD's lepton 'iso' (needs genIso); not used for UE
 )
 
 genParticleUESequence = cms.Sequence(finalGenParticles)
