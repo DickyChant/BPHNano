@@ -73,13 +73,16 @@ tracksUEMCMatch = cms.EDProducer("MCMatcher",
     resolveByMatchQuality = cms.bool(True),
 )
 
-tracksUEMCTable = cms.EDProducer("CandMCMatchTableProducer",
+# BPHNano's own MC-match table producer (as for the other BPHNano MC tables): NanoAOD's
+# CandMCMatchTableProducer changed its interface in 16_0_X (requires "src").
+tracksUEMCTable = cms.EDProducer("CandMCMatchTableProducerBPH",
     recoObjects   = tracksUEMCMatch.src,
     genParts      = cms.InputTag("finalGenParticles"),
     mcMap         = cms.InputTag("tracksUEMCMatch"),
     objName       = trackUETable.name,
     objType       = trackUETable.name,
-    branchName    = cms.string("genPart"),
+    objBranchName = cms.string("genPart"),
+    genBranchName = cms.string("track"),
     docString     = cms.string("MC matching for UE tracks"),
 )
 
