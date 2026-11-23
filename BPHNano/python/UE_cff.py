@@ -119,3 +119,34 @@ packedGenChargedUETable = cms.EDProducer(
     ),
 )
 packedGenChargedUETables = cms.Sequence(packedGenChargedUETable)
+
+# Minimum-bias trigger emulation. The 2026 special low-PU runs recorded only ZeroBias; the L1_MinimumBiasHF* seeds
+# are in the menu with prescale 0 (final rate 0), but their uGT initial decisions are evaluated for every event.
+# L1i_*: initial decisions (L1InitialBitsTableProducer); HF_*: per-side HF PF-candidate summary (HFSummaryTableProducer).
+l1InitialUETable = cms.EDProducer(
+    "L1InitialBitsTableProducer",
+    src   = cms.InputTag("gtStage2Digis"),
+    name  = cms.string("L1i"),
+    seeds = cms.vstring("L1_MinimumBiasHF0_AND_BptxAND", "L1_MinimumBiasHF0", "L1_MinimumBiasHF1_AND_BptxAND",
+                        "L1_MinimumBiasHF1_OR_BptxAND", "L1_MinimumBiasHF2_AND_BptxAND", "L1_MinimumBiasHF2_OR_BptxAND",
+                        "L1_ZeroBias", "L1_SingleJet8_BptxAND", "L1_IsolatedBunch", "L1_FirstCollisionInOrbit"),
+)
+hfSummaryUETable = cms.EDProducer(
+    "HFSummaryTableProducer",
+    src        = cms.InputTag("packedPFCandidates"),
+    name       = cms.string("HF"),
+    thresholds = cms.vdouble(3., 5., 10., 20.),
+)
+mbTrigUETables = cms.Sequence(l1InitialUETable + hfSummaryUETable)
+
+# MC only: generator process code (Pythia 8 SoftQCD: 101 ND, 103/104 SD, 105 DD, 106 CD).
+genProcUETable = cms.EDProducer(
+    "SimpleGenEventFlatTableProducer",
+    src  = cms.InputTag("generator"),
+    name = cms.string("GenProc"),
+    doc  = cms.string("generator process code"),
+    extension = cms.bool(False),
+    variables = cms.PSet(
+        id = Var("signalProcessID", int, doc="GenEventInfoProduct::signalProcessID"),
+    ),
+)

@@ -33,11 +33,14 @@ def nanoAOD_customizeUE(process, isMC):
                                               genParticleUETables +
                                               packedGenChargedUETables +
                                               cms.Sequence(globalTablesMCTask) +   # Pileup_nPU/nTrueInt, genWeight
-                                              tracksUESequenceMC + 
-                                              tracksUETablesMC )
+                                              tracksUESequenceMC +
+                                              tracksUETablesMC +
+                                              mbTrigUETables +
+                                              genProcUETable )
     else:
         # Add only reco tracks (no gen particles)
-        process.nanoSequenceUE = cms.Sequence( process.nanoSequenceUE + 
-                                              tracksUESequence + 
-                                              tracksUETables )
+        process.nanoSequenceUE = cms.Sequence( process.nanoSequenceUE +
+                                              tracksUESequence +
+                                              tracksUETables +
+                                              mbTrigUETables )
     return process
