@@ -60,6 +60,12 @@ options.register('skip', 0,
     "Skip first N events"
 )
 
+options.register('noDupCheck', False,
+    VarParsing.multiplicity.singleton,
+    VarParsing.varType.bool,
+    "Disable the PoolSource duplicate-event check (private MC files reuse run/lumi/event numbers)"
+)
+
 options.register('decay', 'all',
     VarParsing.multiplicity.singleton,
     VarParsing.varType.string,
@@ -154,6 +160,8 @@ process.source = cms.Source(
     secondaryFileNames = cms.untracked.vstring(),
     skipEvents=cms.untracked.uint32(options.skip),
 )
+if options.noDupCheck:
+    process.source.duplicateCheckMode = cms.untracked.string('noDuplicateCheck')
 
 process.options = cms.untracked.PSet(
     wantSummary = cms.untracked.bool(options.wantSummary),
